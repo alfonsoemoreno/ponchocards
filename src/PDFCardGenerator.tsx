@@ -25,81 +25,112 @@ const MARGIN_Y = (PAGE_HEIGHT - totalHeight) / 2;
 async function generatePDF(rows: ExcelRow[]) {
   const doc = new jsPDF({ unit: "mm", format: "letter" });
   const cardsPerPage = CARDS_PER_ROW * CARDS_PER_COL;
-  let cardIndex = 0;
-  for (let i = 0; i < rows.length; i++) {
-    // 1. Tarjeta de datos
-    if (cardIndex > 0 && cardIndex % cardsPerPage === 0) doc.addPage();
-    let idx = cardIndex % cardsPerPage;
-    let row = Math.floor(idx / CARDS_PER_ROW);
-    let col = idx % CARDS_PER_ROW;
-    let x = MARGIN_X + col * (CARD_SIZE + GAP);
-    let y = MARGIN_Y + row * (CARD_SIZE + GAP);
-    doc.setDrawColor(0);
-    doc.rect(x, y, CARD_SIZE, CARD_SIZE);
-    // Canción (arriba, pegado, multilinea)
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    const cancionLines = doc.splitTextToSize(rows[i].CANCION, CARD_SIZE - 8);
-    doc.text(cancionLines, x + CARD_SIZE / 2, y + 7, {
-      align: "center",
-      baseline: "top",
-    });
-    // Año (centro, más pequeño)
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.text(
-      String(rows[i].LANZAMIENTO),
-      x + CARD_SIZE / 2,
-      y + CARD_SIZE / 2,
-      { align: "center", baseline: "middle" }
-    );
-    // Artista (abajo, pegado, multilinea)
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    const artistaLines = doc.splitTextToSize(rows[i].ARTISTA, CARD_SIZE - 8);
-    const artistaLineHeight = 5.5;
-    // Dejar un margen de 10mm desde abajo
-    const artistaYStart =
-      y + CARD_SIZE - 10 - (artistaLines.length - 1) * artistaLineHeight;
-    doc.text(artistaLines, x + CARD_SIZE / 2, artistaYStart, {
-      align: "center",
-      baseline: "top",
-    });
-    cardIndex++;
-    // 2. Tarjeta QR
-    if (cardIndex > 0 && cardIndex % cardsPerPage === 0) doc.addPage();
-    idx = cardIndex % cardsPerPage;
-    row = Math.floor(idx / CARDS_PER_ROW);
-    col = idx % CARDS_PER_ROW;
-    x = MARGIN_X + col * (CARD_SIZE + GAP);
-    y = MARGIN_Y + row * (CARD_SIZE + GAP);
-    doc.setDrawColor(0);
-    doc.rect(x, y, CARD_SIZE, CARD_SIZE);
-    if (rows[i].YOUTUBE) {
-      try {
-        const qrDataUrl = await generateQRCodeDataURL(rows[i].YOUTUBE);
-        doc.addImage(
-          qrDataUrl,
-          "PNG",
-          x + 8,
-          y + 8,
-          CARD_SIZE - 16,
-          CARD_SIZE - 16
-        );
-      } catch {
+  const totalCards = rows.length;
+  const totalPages = Math.ceil(totalCards / cardsPerPage);
+
+  // 1. Print data cards with numbers
+  let cardNumber = 1;
+  for (let page = 0; page < totalPages; page++) {
+    if (page > 0) doc.addPage();
+    for (let i = 0; i < cardsPerPage; i++) {
+      const idx = page * cardsPerPage + i;
+      if (idx >= totalCards) break;
+      const rowPos = Math.floor(i / CARDS_PER_ROW);
+      const colPos = i % CARDS_PER_ROW;
+      const x = MARGIN_X + colPos * (CARD_SIZE + GAP);
+      const y = MARGIN_Y + rowPos * (CARD_SIZE + GAP);
+      doc.setDrawColor(0);
+      doc.rect(x, y, CARD_SIZE, CARD_SIZE);
+      // Card number
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(String(cardNumber), x + 2, y + 3);
+      // Song title
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      const cancionLines = doc.splitTextToSize(
+        rows[idx].CANCION,
+        CARD_SIZE - 8
+      );
+      doc.text(cancionLines, x + CARD_SIZE / 2, y + 7, {
+        align: "center",
+        baseline: "top",
+      });
+      // Year
+      doc.setFontSize(22);
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        String(rows[idx].LANZAMIENTO),
+        x + CARD_SIZE / 2,
+        y + CARD_SIZE / 2,
+        {
+          align: "center",
+          baseline: "middle",
+        }
+      );
+      // Artist
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "normal");
+      const artistaLines = doc.splitTextToSize(
+        rows[idx].ARTISTA,
+        CARD_SIZE - 8
+      );
+      const lineHeight = 5.5;
+      const startY =
+        y + CARD_SIZE - 10 - (artistaLines.length - 1) * lineHeight;
+      doc.text(artistaLines, x + CARD_SIZE / 2, startY, {
+        align: "center",
+        baseline: "top",
+      });
+      cardNumber++;
+    }
+  }
+
+  // 2. Print QR cards on back with matching numbers (horizontal mirror per row)
+  for (let page = 0; page < totalPages; page++) {
+    doc.addPage();
+    for (let i = 0; i < cardsPerPage; i++) {
+      const idx = page * cardsPerPage + i;
+      if (idx >= totalCards) break;
+      // mirror horizontally: same row, flipped column
+      const dataRow = Math.floor(i / CARDS_PER_ROW);
+      const dataCol = i % CARDS_PER_ROW;
+      const rowPos = dataRow;
+      const colPos = CARDS_PER_ROW - 1 - dataCol;
+      const x = MARGIN_X + colPos * (CARD_SIZE + GAP);
+      const y = MARGIN_Y + rowPos * (CARD_SIZE + GAP);
+      doc.setDrawColor(0);
+      doc.rect(x, y, CARD_SIZE, CARD_SIZE);
+      // Card number
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(String(idx + 1), x + 2, y + 3);
+      if (rows[idx].YOUTUBE) {
+        try {
+          const qrDataUrl = await generateQRCodeDataURL(rows[idx].YOUTUBE);
+          doc.addImage(
+            qrDataUrl,
+            "PNG",
+            x + 8,
+            y + 8,
+            CARD_SIZE - 16,
+            CARD_SIZE - 16
+          );
+        } catch {
+          doc.setFontSize(10);
+          doc.text("QR Error", x + CARD_SIZE / 2, y + CARD_SIZE / 2, {
+            align: "center",
+          });
+        }
+      } else {
         doc.setFontSize(10);
-        doc.text("QR Error", x + CARD_SIZE / 2, y + CARD_SIZE / 2, {
+        doc.text("Sin QR", x + CARD_SIZE / 2, y + CARD_SIZE / 2, {
           align: "center",
         });
       }
-    } else {
-      doc.setFontSize(10);
-      doc.text("Sin QR", x + CARD_SIZE / 2, y + CARD_SIZE / 2, {
-        align: "center",
-      });
     }
-    cardIndex++;
   }
+
   doc.save("tarjetas.pdf");
 }
 
