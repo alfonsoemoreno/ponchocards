@@ -6,6 +6,7 @@ import { Box, Button, Typography, Alert, Container } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import DownloadIcon from "@mui/icons-material/Download";
+import MusicNoteIcon from "@mui/icons-material/MusicNote";
 
 interface ExcelRow {
   ARTISTA: string;
@@ -24,6 +25,21 @@ const totalWidth = CARDS_PER_ROW * CARD_SIZE + (CARDS_PER_ROW - 1) * GAP;
 const totalHeight = CARDS_PER_COL * CARD_SIZE + (CARDS_PER_COL - 1) * GAP;
 const MARGIN_X = (PAGE_WIDTH - totalWidth) / 2;
 const MARGIN_Y = (PAGE_HEIGHT - totalHeight) / 2;
+
+// Sample sheet configuration: 5 columns x 4 rows for 20 cards
+const SAMPLE_COLS = 5;
+const SAMPLE_ROWS = 5; // 5 rows for 25 cards
+const SHEET_MARGIN = 10; // page margin in mm
+// calculate card size to avoid cutting at edges
+const SAMPLE_CARD_SIZE =
+  (PAGE_WIDTH - 2 * SHEET_MARGIN - (SAMPLE_COLS - 1) * GAP) / SAMPLE_COLS;
+const SAMPLE_MARGIN_X = SHEET_MARGIN;
+// center vertically
+const SAMPLE_MARGIN_Y =
+  (PAGE_HEIGHT - (SAMPLE_ROWS * SAMPLE_CARD_SIZE + (SAMPLE_ROWS - 1) * GAP)) /
+  2;
+// Placeholder for logo image (base64 Data URL), replace with your own
+const logoDataUrl = "DATA_URL_OF_YOUR_LOGO_HERE"; // must be PNG or JPEG
 
 async function generatePDF(rows: ExcelRow[]) {
   const doc = new jsPDF({ unit: "mm", format: "letter" });
@@ -164,6 +180,58 @@ export default function PDFCardGenerator() {
       if (e instanceof Error) message = e.message;
       setError("Error procesando el archivo: " + message);
     }
+  };
+
+  const handleDownloadSamples = async () => {
+    // Load music note image from public folder
+    const img = new Image();
+    img.src = "/nota-musical.png";
+    await new Promise<void>((resolve) => {
+      img.onload = () => resolve();
+    });
+    const doc = new jsPDF({ unit: "mm", format: "letter" });
+    const totalCards = SAMPLE_COLS * SAMPLE_ROWS;
+    const cardsPerPage = SAMPLE_COLS * SAMPLE_ROWS;
+    const totalPages = Math.ceil(totalCards / cardsPerPage);
+    for (let page = 0; page < totalPages; page++) {
+      if (page > 0) doc.addPage();
+      for (let i = 0; i < cardsPerPage; i++) {
+        const idx = page * cardsPerPage + i;
+        if (idx >= totalCards) break;
+        const rowPos = Math.floor(i / SAMPLE_COLS);
+        const colPos = i % SAMPLE_COLS;
+        const x = SAMPLE_MARGIN_X + colPos * (SAMPLE_CARD_SIZE + GAP);
+        const y = SAMPLE_MARGIN_Y + rowPos * (SAMPLE_CARD_SIZE + GAP);
+        doc.setDrawColor(0);
+        doc.rect(x, y, SAMPLE_CARD_SIZE, SAMPLE_CARD_SIZE);
+        // Logo if provided
+        const logoSize = SAMPLE_CARD_SIZE * 0.25;
+        if (
+          logoDataUrl &&
+          !logoDataUrl.includes("DATA_URL_OF_YOUR_LOGO_HERE")
+        ) {
+          doc.addImage(
+            logoDataUrl,
+            "PNG",
+            x + (SAMPLE_CARD_SIZE - logoSize) / 2,
+            y + 4,
+            logoSize,
+            logoSize
+          );
+        }
+        // Music note image
+        const iconSize = SAMPLE_CARD_SIZE * 0.5;
+        doc.addImage(
+          img,
+          "PNG",
+          x + (SAMPLE_CARD_SIZE - iconSize) / 2,
+          y + (SAMPLE_CARD_SIZE - iconSize) / 2,
+          iconSize,
+          iconSize
+        );
+      }
+    }
+    doc.save("fichas.pdf");
   };
 
   return (
@@ -323,6 +391,19 @@ export default function PDFCardGenerator() {
               }}
             >
               Descargar Excel
+            </Button>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleDownloadSamples}
+              startIcon={<MusicNoteIcon />}
+              sx={{
+                width: { xs: "100%", sm: "auto" },
+                fontSize: "1.2rem",
+                fontWeight: 700,
+              }}
+            >
+              Descargar fichas
             </Button>
           </Box>
           {error && (
