@@ -319,19 +319,17 @@ export default function PDFCardGenerator() {
             p: { xs: 2, md: 4 },
           }}
         >
-          <Typography
-            variant="h4"
-            component="h2"
-            gutterBottom
-            sx={{
-              fontSize: { xs: 34, sm: 42 },
-              fontFamily:
-                '"Lilita One", "Poppins", "Fredoka", Arial, sans-serif',
-              textAlign: "center",
-            }}
-          >
-            PONCHISTER CARDS
-          </Typography>
+          <Box sx={{ textAlign: "center", mb: 2 }}>
+            <img
+              src="/ponchister_logo.png"
+              alt="Ponchister Logo"
+              style={{
+                maxWidth: "50%",
+                height: "auto",
+                margin: "0 auto",
+              }}
+            />
+          </Box>
           <Box
             sx={{
               mb: 2,
