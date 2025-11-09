@@ -1,0 +1,173 @@
+import { useEffect, useState } from "react";
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  TextField,
+} from "@mui/material";
+import type { SongInput, Song } from "../types";
+
+interface SongFormDialogProps {
+  open: boolean;
+  mode: "create" | "edit";
+  initialValue?: Song | null;
+  loading?: boolean;
+  onClose: () => void;
+  onSubmit: (values: SongInput) => Promise<void> | void;
+}
+
+type FormState = {
+  artist: string;
+  title: string;
+  year: string;
+  youtube_url: string;
+};
+
+const EMPTY_STATE: FormState = {
+  artist: "",
+  title: "",
+  year: "",
+  youtube_url: "",
+};
+
+export default function SongFormDialog({
+  open,
+  mode,
+  initialValue,
+  loading = false,
+  onClose,
+  onSubmit,
+}: SongFormDialogProps) {
+  const [values, setValues] = useState<FormState>(EMPTY_STATE);
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormState, string>>
+  >({});
+
+  useEffect(() => {
+    if (initialValue && mode === "edit") {
+      setValues({
+        artist: initialValue.artist,
+        title: initialValue.title,
+        year: initialValue.year ? String(initialValue.year) : "",
+        youtube_url: initialValue.youtube_url,
+      });
+      setErrors({});
+      return;
+    }
+
+    if (mode === "create") {
+      setValues(EMPTY_STATE);
+      setErrors({});
+    }
+  }, [initialValue, mode]);
+
+  const handleChange =
+    (field: keyof FormState) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setValues((prev) => ({ ...prev, [field]: event.target.value }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const nextErrors: Partial<Record<keyof FormState, string>> = {};
+    if (!values.artist.trim()) {
+      nextErrors.artist = "El artista es obligatorio";
+    }
+    if (!values.title.trim()) {
+      nextErrors.title = "La canción es obligatoria";
+    }
+    if (!values.youtube_url.trim()) {
+      nextErrors.youtube_url = "El enlace de YouTube es obligatorio";
+    }
+
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      return;
+    }
+
+    const parsedYear = values.year.trim();
+    const yearValue =
+      parsedYear === "" ? null : Number.parseInt(parsedYear, 10);
+
+    const payload: SongInput = {
+      artist: values.artist.trim(),
+      title: values.title.trim(),
+      youtube_url: values.youtube_url.trim(),
+      year: Number.isNaN(yearValue) ? null : yearValue,
+    };
+
+    await onSubmit(payload);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={loading ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ component: "form", onSubmit: handleSubmit }}
+    >
+      <DialogTitle>
+        {mode === "create" ? "Agregar canción" : "Editar canción"}
+      </DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={2} sx={{ mt: 0 }}>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+            <TextField
+              label="Artista"
+              value={values.artist}
+              onChange={handleChange("artist")}
+              error={Boolean(errors.artist)}
+              helperText={errors.artist}
+              fullWidth
+              disabled={loading}
+              autoFocus
+            />
+            <TextField
+              label="Canción"
+              value={values.title}
+              onChange={handleChange("title")}
+              error={Boolean(errors.title)}
+              helperText={errors.title}
+              fullWidth
+              disabled={loading}
+            />
+          </Stack>
+          <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+            <TextField
+              label="Año"
+              value={values.year}
+              onChange={handleChange("year")}
+              type="number"
+              inputProps={{ inputMode: "numeric" }}
+              fullWidth
+              disabled={loading}
+            />
+            <TextField
+              label="Enlace de YouTube"
+              value={values.youtube_url}
+              onChange={handleChange("youtube_url")}
+              error={Boolean(errors.youtube_url)}
+              helperText={errors.youtube_url}
+              fullWidth
+              disabled={loading}
+            />
+          </Stack>
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={loading}>
+          Cancelar
+        </Button>
+        <Button type="submit" variant="contained" disabled={loading}>
+          {mode === "create" ? "Guardar" : "Actualizar"}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}

@@ -1,69 +1,55 @@
-# React + TypeScript + Vite
+# Ponchocards
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interfaz para generar fichas en PDF y administrar la base de datos de canciones utilizada por Ponchister. Incluye:
 
-Currently, two official plugins are available:
+- Generador de tarjetas (cara A y cara B con QR) a partir de archivos Excel compatibles con la plantilla oficial.
+- Panel de administración protegido por autenticación de Supabase para crear, editar y eliminar canciones.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Requisitos previos
 
-## Expanding the ESLint configuration
+- Node.js 20+
+- Cuenta de Supabase con la tabla `songs` (`id`, `artist`, `title`, `year`, `youtube_url`) y políticas RLS que permitan CRUD únicamente a usuarios autenticados.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Variables de entorno
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Define un archivo `.env.local` (o `.env`) en la raíz del proyecto con tus credenciales públicas:
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+VITE_SUPABASE_URL=https://<tu-proyecto>.supabase.co
+VITE_SUPABASE_ANON_KEY=<clave_anonima>
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Sin estas variables el generador seguirá funcionando, pero el panel de administración permanecerá deshabilitado.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Instalación
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
+
+## Desarrollo
+
+```bash
+npm run dev
+```
+
+- El generador de PDF está disponible por defecto.
+- El acceso administrativo se activa desde el botón `Acceso admin` (esquina superior derecha). Se solicitará un correo y contraseña vértice de Supabase Auth.
+- Una vez autenticado podrás gestionar las canciones y cerrar sesión desde el propio panel.
+
+## Seed de canciones desde Excel
+
+El script `scripts/seed-songs.mjs` permite cargar canciones desde `plantilla.xlsx` hacia Supabase. Asegúrate de definir las variables de entorno y luego ejecuta:
+
+```bash
+node scripts/seed-songs.mjs
+```
+
+## Construcción y despliegue
+
+```bash
+npm run build
+npm run preview
+```
+
+El directorio `dist/` contendrá los archivos estáticos listos para desplegar en Vercel, Netlify u otro hosting estático.
