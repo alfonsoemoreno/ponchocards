@@ -1,5 +1,5 @@
 import { getSupabaseClient } from "../lib/supabaseClient";
-import type { Song, SongInput } from "../types";
+import type { Song, SongInput, SongStatistics } from "../types";
 
 const SONG_FIELDS = "id, artist, title, year, youtube_url";
 
@@ -45,25 +45,34 @@ export async function listSongs(params: {
   page: number;
   pageSize: number;
   search?: string;
+  year?: number | null;
+  sortBy?: "id" | "artist" | "title" | "year";
+  sortDirection?: "asc" | "desc";
 }): Promise<{ songs: Song[]; total: number }>;
 export async function listSongs({
   page,
   pageSize,
   search,
+  year,
+  sortBy = "id",
+  sortDirection = "asc",
 }: {
   page: number;
   pageSize: number;
   search?: string;
+  year?: number | null;
+  sortBy?: "id" | "artist" | "title" | "year";
+  sortDirection?: "asc" | "desc";
 }): Promise<{ songs: Song[]; total: number }> {
   const supabase = getSupabaseClient();
   const from = page * pageSize;
   const to = from + pageSize - 1;
 
-  let query = supabase
-    .from("songs")
-    .select(SONG_FIELDS, { count: "exact" })
-    .order("id", { ascending: true })
-    .range(from, to);
+  let query = supabase.from("songs").select(SONG_FIELDS, { count: "exact" });
+
+  if (typeof year === "number") {
+    query = query.eq("year", year);
+  }
 
   if (search && search.trim() !== "") {
     const term = search.trim();
@@ -71,6 +80,31 @@ export async function listSongs({
       `artist.ilike.%${term}%,title.ilike.%${term}%,youtube_url.ilike.%${term}%`
     );
   }
+
+  const ascending = sortDirection === "asc";
+  const orderOptions: {
+    ascending: boolean;
+    nullsFirst?: boolean;
+    nullsLast?: boolean;
+  } = {
+    ascending,
+  };
+
+  if (sortBy === "year") {
+    if (ascending) {
+      orderOptions.nullsLast = true;
+    } else {
+      orderOptions.nullsFirst = true;
+    }
+  }
+
+  query = query.order(sortBy, orderOptions);
+
+  if (sortBy !== "id") {
+    query = query.order("id", { ascending: true });
+  }
+
+  query = query.range(from, to);
 
   const { data, error, count } = await query;
 
@@ -136,4 +170,109 @@ export async function deleteSong(id: number): Promise<void> {
   if (error) {
     throw new Error(error.message || "No se pudo eliminar la canción.");
   }
+}
+
+export async function fetchSongStatistics(): Promise<SongStatistics> {
+  const supabase = getSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("songs")
+    .select(SONG_FIELDS)
+    .order("year", { ascending: true });
+
+  if (error) {
+    throw new Error(
+      error.message || "No se pudieron obtener las estadísticas."
+    );
+  }
+
+  const songs = (data ?? []).map((item) =>
+    normalizeSong(item as Record<string, unknown>)
+  );
+
+  const totalSongs = songs.length;
+  const missingYearCount = songs.reduce(
+    (acc, song) => (song.year === null ? acc + 1 : acc),
+    0
+  );
+
+  const yearMap = new Map<number, number>();
+  const decadeMap = new Map<number, number>();
+  const artistMap = new Map<string, number>();
+
+  songs.forEach((song) => {
+    const artistKey = song.artist.trim() || "Sin artista";
+    artistMap.set(artistKey, (artistMap.get(artistKey) ?? 0) + 1);
+
+    if (song.year === null) {
+      return;
+    }
+
+    yearMap.set(song.year, (yearMap.get(song.year) ?? 0) + 1);
+    const decade = Math.floor(song.year / 10) * 10;
+    decadeMap.set(decade, (decadeMap.get(decade) ?? 0) + 1);
+  });
+
+  const yearEntries = Array.from(yearMap.entries()).map(([year, count]) => ({
+    label: String(year),
+    value: year,
+    count,
+  }));
+
+  const yearsMostCommon = [...yearEntries]
+    .sort((a, b) => {
+      if (b.count === a.count) {
+        return a.value - b.value;
+      }
+      return b.count - a.count;
+    })
+    .slice(0, 5)
+    .map(({ label, count }) => ({ label, count }));
+
+  const yearsLeastCommon = [...yearEntries]
+    .sort((a, b) => {
+      if (a.count === b.count) {
+        return a.value - b.value;
+      }
+      return a.count - b.count;
+    })
+    .slice(0, Math.min(5, yearEntries.length))
+    .map(({ label, count }) => ({ label, count }));
+
+  const decadeEntries = Array.from(decadeMap.entries()).map(
+    ([decade, count]) => ({
+      label: `${decade}s`,
+      value: decade,
+      count,
+    })
+  );
+
+  const decadesLeastCommon = [...decadeEntries]
+    .sort((a, b) => {
+      if (a.count === b.count) {
+        return a.value - b.value;
+      }
+      return a.count - b.count;
+    })
+    .slice(0, Math.min(5, decadeEntries.length))
+    .map(({ label, count }) => ({ label, count }));
+
+  const artistsMostCommon = Array.from(artistMap.entries())
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => {
+      if (b.count === a.count) {
+        return a.label.localeCompare(b.label);
+      }
+      return b.count - a.count;
+    })
+    .slice(0, 10);
+
+  return {
+    totalSongs,
+    missingYearCount,
+    yearsMostCommon,
+    yearsLeastCommon,
+    decadesLeastCommon,
+    artistsMostCommon,
+  };
 }

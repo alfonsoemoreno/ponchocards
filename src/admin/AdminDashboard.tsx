@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, type SyntheticEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type ChangeEvent,
+  type SyntheticEvent,
+} from "react";
 import {
   Alert,
   Box,
@@ -11,9 +17,12 @@ import {
   DialogTitle,
   Divider,
   IconButton,
+  MenuItem,
   Paper,
   Snackbar,
   Stack,
+  Tab,
+  Tabs,
   Table,
   TableBody,
   TableCell,
@@ -33,14 +42,16 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 
 import SongFormDialog from "./SongFormDialog";
+import SongStatisticsView from "./SongStatisticsView";
 import { isSupabaseConfigured } from "../lib/supabaseClient";
 import {
   createSong,
   deleteSong,
   listSongs,
+  fetchSongStatistics,
   updateSong,
 } from "../services/songService";
-import type { Song, SongInput } from "../types";
+import type { Song, SongInput, SongStatistics } from "../types";
 
 interface FeedbackState {
   severity: "success" | "error";
@@ -49,6 +60,27 @@ interface FeedbackState {
 
 const DEFAULT_PAGE_SIZE = 25;
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+type SortOption =
+  | "id_asc"
+  | "artist_asc"
+  | "artist_desc"
+  | "title_asc"
+  | "title_desc"
+  | "year_desc"
+  | "year_asc";
+
+const DEFAULT_SORT_OPTION: SortOption = "id_asc";
+
+const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
+  { value: "id_asc", label: "ID ascendente" },
+  { value: "artist_asc", label: "Artista A → Z" },
+  { value: "artist_desc", label: "Artista Z → A" },
+  { value: "title_asc", label: "Canción A → Z" },
+  { value: "title_desc", label: "Canción Z → A" },
+  { value: "year_desc", label: "Año más reciente" },
+  { value: "year_asc", label: "Año más antiguo" },
+];
 
 interface AdminDashboardProps {
   onExit: () => void;
@@ -68,6 +100,9 @@ export default function AdminDashboard({
   const [rowsPerPage, setRowsPerPage] = useState(DEFAULT_PAGE_SIZE);
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [yearInput, setYearInput] = useState("");
+  const [yearFilter, setYearFilter] = useState<number | null>(null);
+  const [sortOption, setSortOption] = useState<SortOption>(DEFAULT_SORT_OPTION);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
@@ -83,6 +118,41 @@ export default function AdminDashboard({
   const [deleteTarget, setDeleteTarget] = useState<Song | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
+  const [activeTab, setActiveTab] = useState<"songs" | "stats">("songs");
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [statistics, setStatistics] = useState<SongStatistics | null>(null);
+
+  const sortConfig = useMemo<{
+    sortBy: "id" | "artist" | "title" | "year";
+    direction: "asc" | "desc";
+  }>(() => {
+    switch (sortOption) {
+      case "artist_asc":
+        return { sortBy: "artist", direction: "asc" };
+      case "artist_desc":
+        return { sortBy: "artist", direction: "desc" };
+      case "title_asc":
+        return { sortBy: "title", direction: "asc" };
+      case "title_desc":
+        return { sortBy: "title", direction: "desc" };
+      case "year_desc":
+        return { sortBy: "year", direction: "desc" };
+      case "year_asc":
+        return { sortBy: "year", direction: "asc" };
+      default:
+        return { sortBy: "id", direction: "asc" };
+    }
+  }, [sortOption]);
+
+  const filtersActive = useMemo(
+    () =>
+      yearFilter !== null ||
+      sortOption !== DEFAULT_SORT_OPTION ||
+      yearInput.trim() !== "",
+    [yearFilter, sortOption, yearInput]
+  );
+
   useEffect(() => {
     const handler = window.setTimeout(() => {
       setPage(0);
@@ -91,6 +161,37 @@ export default function AdminDashboard({
 
     return () => window.clearTimeout(handler);
   }, [searchInput]);
+
+  useEffect(() => {
+    const handler = window.setTimeout(() => {
+      const trimmed = yearInput.trim();
+
+      if (trimmed === "") {
+        setYearFilter((prev) => {
+          if (prev !== null) {
+            setPage(0);
+          }
+          return null;
+        });
+        return;
+      }
+
+      const parsed = Number.parseInt(trimmed, 10);
+      if (Number.isNaN(parsed)) {
+        return;
+      }
+
+      setYearFilter((prev) => {
+        if (prev !== parsed) {
+          setPage(0);
+          return parsed;
+        }
+        return prev;
+      });
+    }, 400);
+
+    return () => window.clearTimeout(handler);
+  }, [yearInput]);
 
   useEffect(() => {
     let cancelled = false;
@@ -108,6 +209,9 @@ export default function AdminDashboard({
           page,
           pageSize: rowsPerPage,
           search: searchTerm,
+          year: yearFilter ?? undefined,
+          sortBy: sortConfig.sortBy,
+          sortDirection: sortConfig.direction,
         });
 
         if (!cancelled) {
@@ -138,7 +242,55 @@ export default function AdminDashboard({
     return () => {
       cancelled = true;
     };
-  }, [page, rowsPerPage, searchTerm, reloadToken, supabaseConfigured]);
+  }, [
+    page,
+    rowsPerPage,
+    searchTerm,
+    reloadToken,
+    supabaseConfigured,
+    yearFilter,
+    sortConfig,
+  ]);
+
+  useEffect(() => {
+    if (activeTab !== "stats" || !supabaseConfigured) {
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadStats = async () => {
+      setStatsLoading(true);
+      setStatsError(null);
+      try {
+        const data = await fetchSongStatistics();
+        if (!cancelled) {
+          setStatistics(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          const message =
+            err instanceof Error
+              ? err.message
+              : "No se pudieron obtener las estadísticas.";
+          setStatsError(message);
+          setStatistics(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setStatsLoading(false);
+        }
+      }
+    };
+
+    loadStats().catch(() => {
+      /* handled above */
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab, reloadToken, supabaseConfigured]);
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
@@ -150,6 +302,38 @@ export default function AdminDashboard({
     const nextRows = Number(event.target.value);
     setRowsPerPage(nextRows);
     setPage(0);
+  };
+
+  const handleYearInputChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setYearInput(event.target.value);
+  };
+
+  const handleSortOptionChange = (value: SortOption) => {
+    if (value === sortOption) {
+      return;
+    }
+    setSortOption(value);
+    setPage(0);
+  };
+
+  const handleClearFilters = () => {
+    const hadYear = yearFilter !== null || yearInput.trim() !== "";
+    const hadSort = sortOption !== DEFAULT_SORT_OPTION;
+
+    if (hadYear) {
+      setYearFilter(null);
+      setYearInput("");
+    }
+
+    if (hadSort) {
+      setSortOption(DEFAULT_SORT_OPTION);
+    }
+
+    if (hadYear || hadSort) {
+      setPage(0);
+    }
   };
 
   const handleRefresh = () => {
@@ -252,6 +436,13 @@ export default function AdminDashboard({
     }
     setSnackbarOpen(false);
     setFeedback(null);
+  };
+
+  const handleTabChange = (
+    _event: SyntheticEvent,
+    value: "songs" | "stats"
+  ) => {
+    setActiveTab(value);
   };
 
   const renderTableBody = () => {
@@ -411,83 +602,189 @@ export default function AdminDashboard({
                 </Alert>
               )}
 
-              {error && (
-                <Alert severity="error" onClose={() => setError(null)}>
-                  {error}
-                </Alert>
-              )}
-
-              <Stack
-                direction={{ xs: "column", md: "row" }}
-                spacing={2}
-                justifyContent="space-between"
-                alignItems={{ xs: "stretch", md: "center" }}
+              <Tabs
+                value={activeTab}
+                onChange={handleTabChange}
+                textColor="primary"
+                indicatorColor="primary"
+                variant="scrollable"
+                allowScrollButtonsMobile
+                sx={{
+                  borderBottom: "1px solid rgba(31,60,122,0.15)",
+                  mb: -2,
+                }}
               >
-                <TextField
-                  label="Buscar canciones"
-                  placeholder="Busca por artista, canción o enlace"
-                  value={searchInput}
-                  onChange={(event) => setSearchInput(event.target.value)}
-                  fullWidth
+                <Tab label="Canciones" value="songs" />
+                <Tab
+                  label="Estadísticas"
+                  value="stats"
                   disabled={!supabaseConfigured}
                 />
-                <Stack direction="row" spacing={1} justifyContent="flex-end">
-                  <Tooltip title="Recargar lista">
-                    <span>
-                      <IconButton
-                        color="primary"
-                        onClick={handleRefresh}
-                        disabled={!supabaseConfigured || loading}
+              </Tabs>
+
+              {activeTab === "songs" ? (
+                <>
+                  {error && (
+                    <Alert severity="error" onClose={() => setError(null)}>
+                      {error}
+                    </Alert>
+                  )}
+
+                  <Stack spacing={2}>
+                    <Stack
+                      direction={{ xs: "column", md: "row" }}
+                      spacing={2}
+                      justifyContent="space-between"
+                      alignItems={{ xs: "stretch", md: "center" }}
+                    >
+                      <TextField
+                        label="Buscar canciones"
+                        placeholder="Busca por artista, canción o enlace"
+                        value={searchInput}
+                        onChange={(event) => setSearchInput(event.target.value)}
+                        fullWidth
+                        disabled={!supabaseConfigured}
+                      />
+                      <Stack
+                        direction="row"
+                        spacing={1}
+                        justifyContent="flex-end"
                       >
-                        <RefreshIcon />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-                  <Button
-                    variant="contained"
-                    startIcon={<AddCircleIcon />}
-                    onClick={openCreateForm}
-                    disabled={!supabaseConfigured}
-                    sx={{ fontWeight: 700 }}
+                        <Tooltip title="Recargar lista">
+                          <span>
+                            <IconButton
+                              color="primary"
+                              onClick={handleRefresh}
+                              disabled={!supabaseConfigured || loading}
+                            >
+                              <RefreshIcon />
+                            </IconButton>
+                          </span>
+                        </Tooltip>
+                        <Button
+                          variant="contained"
+                          startIcon={<AddCircleIcon />}
+                          onClick={openCreateForm}
+                          disabled={!supabaseConfigured}
+                          sx={{ fontWeight: 700 }}
+                        >
+                          Nueva canción
+                        </Button>
+                      </Stack>
+                    </Stack>
+
+                    <Stack
+                      direction={{ xs: "column", md: "row" }}
+                      spacing={2}
+                      alignItems={{ xs: "stretch", md: "center" }}
+                    >
+                      <TextField
+                        label="Filtrar por año"
+                        type="number"
+                        value={yearInput}
+                        onChange={handleYearInputChange}
+                        placeholder="Ej: 1994"
+                        InputLabelProps={{ shrink: true }}
+                        inputProps={{ min: 0 }}
+                        sx={{
+                          width: { xs: "100%", md: "auto" },
+                          maxWidth: { md: 220 },
+                        }}
+                        disabled={!supabaseConfigured}
+                      />
+                      <TextField
+                        select
+                        label="Ordenar por"
+                        value={sortOption}
+                        onChange={(event) =>
+                          handleSortOptionChange(
+                            event.target.value as SortOption
+                          )
+                        }
+                        sx={{
+                          width: { xs: "100%", md: "auto" },
+                          minWidth: { md: 220 },
+                        }}
+                        disabled={!supabaseConfigured}
+                      >
+                        {SORT_OPTIONS.map((option) => (
+                          <MenuItem key={option.value} value={option.value}>
+                            {option.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                      <Button
+                        variant="outlined"
+                        onClick={handleClearFilters}
+                        disabled={!filtersActive || !supabaseConfigured}
+                        sx={{ alignSelf: { xs: "stretch", md: "flex-start" } }}
+                      >
+                        Limpiar filtros
+                      </Button>
+                    </Stack>
+                  </Stack>
+
+                  <Divider />
+
+                  <Paper elevation={0} sx={{ overflow: "hidden" }}>
+                    <TableContainer>
+                      <Table size="medium">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>ID</TableCell>
+                            <TableCell>Artista</TableCell>
+                            <TableCell>Canción</TableCell>
+                            <TableCell>Año</TableCell>
+                            <TableCell>Enlace</TableCell>
+                            <TableCell align="right">Acciones</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>{renderTableBody()}</TableBody>
+                      </Table>
+                    </TableContainer>
+                    <TablePagination
+                      component="div"
+                      count={total}
+                      page={page}
+                      rowsPerPage={rowsPerPage}
+                      onPageChange={handleChangePage}
+                      onRowsPerPageChange={handleChangeRowsPerPage}
+                      rowsPerPageOptions={PAGE_SIZE_OPTIONS}
+                      labelRowsPerPage="Registros por página"
+                      labelDisplayedRows={({ from, to, count }) =>
+                        `${from}-${to} de ${
+                          count !== -1 ? count : `más de ${to}`
+                        }`
+                      }
+                      disabled={!supabaseConfigured}
+                    />
+                  </Paper>
+                </>
+              ) : (
+                <>
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    alignItems={{ xs: "stretch", sm: "center" }}
+                    justifyContent="flex-end"
+                    spacing={1.5}
                   >
-                    Nueva canción
-                  </Button>
-                </Stack>
-              </Stack>
-
-              <Divider />
-
-              <Paper elevation={0} sx={{ overflow: "hidden" }}>
-                <TableContainer>
-                  <Table size="medium">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>ID</TableCell>
-                        <TableCell>Artista</TableCell>
-                        <TableCell>Canción</TableCell>
-                        <TableCell>Año</TableCell>
-                        <TableCell>Enlace</TableCell>
-                        <TableCell align="right">Acciones</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>{renderTableBody()}</TableBody>
-                  </Table>
-                </TableContainer>
-                <TablePagination
-                  component="div"
-                  count={total}
-                  page={page}
-                  rowsPerPage={rowsPerPage}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                  rowsPerPageOptions={PAGE_SIZE_OPTIONS}
-                  labelRowsPerPage="Registros por página"
-                  labelDisplayedRows={({ from, to, count }) =>
-                    `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
-                  }
-                  disabled={!supabaseConfigured}
-                />
-              </Paper>
+                    <Button
+                      variant="outlined"
+                      startIcon={<RefreshIcon />}
+                      onClick={handleRefresh}
+                      disabled={statsLoading || !supabaseConfigured}
+                      sx={{ alignSelf: { xs: "stretch", sm: "flex-end" } }}
+                    >
+                      Actualizar estadísticas
+                    </Button>
+                  </Stack>
+                  <SongStatisticsView
+                    loading={statsLoading}
+                    error={statsError}
+                    stats={statistics}
+                  />
+                </>
+              )}
             </Stack>
           </Paper>
         </Container>
