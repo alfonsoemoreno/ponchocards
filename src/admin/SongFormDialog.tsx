@@ -102,6 +102,12 @@ export default function SongFormDialog({
     };
 
     await onSubmit(payload);
+
+    // Limpiar el formulario después de un envío exitoso en modo crear
+    if (mode === "create") {
+      setValues(EMPTY_STATE);
+      setErrors({});
+    }
   };
 
   return (
