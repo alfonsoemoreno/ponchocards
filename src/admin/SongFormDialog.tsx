@@ -7,6 +7,8 @@ import {
   DialogTitle,
   Stack,
   TextField,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import type { SongInput, Song } from "../types";
 
@@ -45,6 +47,8 @@ export default function SongFormDialog({
   const [errors, setErrors] = useState<
     Partial<Record<keyof FormState, string>>
   >({});
+  const theme = useTheme();
+  const fullScreen = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     if (initialValue && mode === "edit") {
@@ -116,12 +120,26 @@ export default function SongFormDialog({
       onClose={loading ? undefined : onClose}
       fullWidth
       maxWidth="sm"
-      PaperProps={{ component: "form", onSubmit: handleSubmit }}
+      fullScreen={fullScreen}
+      PaperProps={{
+        component: "form",
+        onSubmit: handleSubmit,
+        sx: {
+          m: 0,
+          borderRadius: fullScreen ? 0 : 2,
+        },
+      }}
     >
       <DialogTitle>
         {mode === "create" ? "Agregar canción" : "Editar canción"}
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent
+        dividers
+        sx={{
+          px: { xs: 2, sm: 3 },
+          py: { xs: 2, sm: 3 },
+        }}
+      >
         <Stack spacing={2} sx={{ mt: 0 }}>
           <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
             <TextField
@@ -166,11 +184,27 @@ export default function SongFormDialog({
           </Stack>
         </Stack>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} disabled={loading}>
+      <DialogActions
+        sx={{
+          flexDirection: { xs: "column", sm: "row" },
+          gap: { xs: 1, sm: 0 },
+          px: { xs: 2, sm: 3 },
+          pb: { xs: 2, sm: 3 },
+        }}
+      >
+        <Button
+          onClick={onClose}
+          disabled={loading}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
           Cancelar
         </Button>
-        <Button type="submit" variant="contained" disabled={loading}>
+        <Button
+          type="submit"
+          variant="contained"
+          disabled={loading}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
           {mode === "create" ? "Guardar" : "Actualizar"}
         </Button>
       </DialogActions>

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -19,6 +20,8 @@ import {
   IconButton,
   MenuItem,
   Paper,
+  Chip,
+  Fab,
   Snackbar,
   Stack,
   Tab,
@@ -33,13 +36,18 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
+  Zoom,
 } from "@mui/material";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
+import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 import SongFormDialog from "./SongFormDialog";
 import SongStatisticsView from "./SongStatisticsView";
@@ -122,6 +130,55 @@ export default function AdminDashboard({
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState<string | null>(null);
   const [statistics, setStatistics] = useState<SongStatistics | null>(null);
+
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const mobileAccents = useMemo(
+    () => [
+      {
+        gradient:
+          "linear-gradient(135deg, rgba(31,60,122,0.92) 0%, rgba(63,142,252,0.88) 60%, rgba(99,213,245,0.9) 100%)",
+        border: "1px solid rgba(118,181,255,0.45)",
+        shadow: "0 24px 48px rgba(46,124,227,0.35)",
+        chipBg: "rgba(255,255,255,0.18)",
+        chipColor: "#E8F3FF",
+        accentText: "rgba(255,255,255,0.78)",
+      },
+      {
+        gradient:
+          "linear-gradient(135deg, rgba(110,67,255,0.95) 0%, rgba(178,106,250,0.85) 50%, rgba(255,165,241,0.9) 100%)",
+        border: "1px solid rgba(209,166,255,0.4)",
+        shadow: "0 24px 52px rgba(150,93,255,0.4)",
+        chipBg: "rgba(27,7,53,0.35)",
+        chipColor: "#FFE7FF",
+        accentText: "rgba(255,238,255,0.78)",
+      },
+      {
+        gradient:
+          "linear-gradient(135deg, rgba(7,94,104,0.9) 0%, rgba(26,167,178,0.88) 50%, rgba(126,233,200,0.93) 100%)",
+        border: "1px solid rgba(126,233,200,0.45)",
+        shadow: "0 24px 46px rgba(26,167,178,0.32)",
+        chipBg: "rgba(4,37,46,0.4)",
+        chipColor: "#D8FFF4",
+        accentText: "rgba(227,255,247,0.78)",
+      },
+      {
+        gradient:
+          "linear-gradient(135deg, rgba(138,43,226,0.92) 0%, rgba(255,105,180,0.9) 60%, rgba(255,188,113,0.9) 100%)",
+        border: "1px solid rgba(255,188,213,0.48)",
+        shadow: "0 24px 48px rgba(190,85,205,0.38)",
+        chipBg: "rgba(29,0,52,0.35)",
+        chipColor: "#FFE8F4",
+        accentText: "rgba(255,246,255,0.8)",
+      },
+    ],
+    []
+  );
+
+  const getMobileAccent = useCallback(
+    (id: number) => mobileAccents[id % mobileAccents.length],
+    [mobileAccents]
+  );
 
   const sortConfig = useMemo<{
     sortBy: "id" | "artist" | "title" | "year";
@@ -518,6 +575,232 @@ export default function AdminDashboard({
     ));
   };
 
+  const renderMobileSongCards = () => {
+    if (loading) {
+      return (
+        <Box sx={{ py: 4, display: "flex", justifyContent: "center" }}>
+          <CircularProgress color="primary" />
+        </Box>
+      );
+    }
+
+    if (!songs.length) {
+      return (
+        <Paper elevation={0} sx={{ p: 3, textAlign: "center" }}>
+          <Typography variant="body1" color="text.secondary">
+            {searchTerm
+              ? "No hay resultados que coincidan con tu búsqueda."
+              : "Todavía no hay canciones registradas."}
+          </Typography>
+        </Paper>
+      );
+    }
+
+    return songs.map((song) => {
+      const accent = getMobileAccent(song.id);
+      const yearLabel = song.year ? song.year.toString() : "Sin año";
+
+      return (
+        <Paper
+          key={song.id}
+          elevation={0}
+          sx={{
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 4,
+            background: accent.gradient,
+            border: accent.border,
+            boxShadow: accent.shadow,
+            color: "#ffffff",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "radial-gradient(circle at 15% 15%, rgba(255,255,255,0.18) 0%, rgba(10,10,30,0.1) 35%, rgba(10,10,40,0.55) 100%)",
+              opacity: 0.95,
+            }}
+          />
+          <Stack spacing={2.4} sx={{ position: "relative", zIndex: 1, p: 2.8 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Typography
+                variant="overline"
+                sx={{
+                  letterSpacing: 2.4,
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  color: accent.accentText,
+                }}
+              >
+                #{String(song.id).padStart(3, "0")}
+              </Typography>
+              <Chip
+                label={yearLabel}
+                size="small"
+                sx={{
+                  backgroundColor: accent.chipBg,
+                  color: accent.chipColor,
+                  fontWeight: 600,
+                  letterSpacing: 0.6,
+                  textTransform: "uppercase",
+                  backdropFilter: "blur(4px)",
+                }}
+              />
+            </Stack>
+
+            <Stack spacing={1.3}>
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "rgba(255,255,255,0.7)",
+                    letterSpacing: 1.2,
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                  }}
+                >
+                  Artista
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 800,
+                    lineHeight: 1.2,
+                    textShadow: "0 8px 24px rgba(0,0,0,0.35)",
+                  }}
+                >
+                  {song.artist}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "rgba(255,255,255,0.7)",
+                    letterSpacing: 1.2,
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                  }}
+                >
+                  Canción
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    lineHeight: 1.25,
+                    textShadow: "0 10px 32px rgba(0,0,0,0.35)",
+                  }}
+                >
+                  {song.title}
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Divider
+              sx={{
+                borderColor: "rgba(255,255,255,0.2)",
+                borderBottomWidth: 1,
+                my: 1,
+              }}
+            />
+
+            <Stack spacing={1.2}>
+              {song.youtube_url ? (
+                <Button
+                  variant="outlined"
+                  component="a"
+                  href={song.youtube_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  startIcon={<InfoOutlinedIcon />}
+                  fullWidth
+                  sx={{
+                    color: "#ffffff",
+                    borderColor: "rgba(255,255,255,0.5)",
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    textTransform: "none",
+                    backdropFilter: "blur(3px)",
+                    px: 1,
+                    py: 1,
+                    "&:hover": {
+                      borderColor: "rgba(255,255,255,0.8)",
+                      backgroundColor: "rgba(255,255,255,0.12)",
+                    },
+                  }}
+                >
+                  Abrir enlace
+                </Button>
+              ) : (
+                <Chip
+                  label="Sin enlace"
+                  size="small"
+                  sx={{
+                    alignSelf: "flex-start",
+                    backgroundColor: "rgba(0,0,0,0.35)",
+                    color: "rgba(255,255,255,0.75)",
+                    fontWeight: 600,
+                    letterSpacing: 0.6,
+                    textTransform: "uppercase",
+                    backdropFilter: "blur(3px)",
+                  }}
+                />
+              )}
+              <Button
+                variant="contained"
+                startIcon={<EditIcon fontSize="small" />}
+                onClick={() => openEditForm(song)}
+                fullWidth
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  backgroundColor: "rgba(255,255,255,0.18)",
+                  color: "#ffffff",
+                  boxShadow: "0 18px 36px rgba(0,0,0,0.18)",
+                  py: 1.05,
+                  "&:hover": {
+                    backgroundColor: "rgba(255,255,255,0.28)",
+                    boxShadow: "0 18px 36px rgba(0,0,0,0.28)",
+                  },
+                }}
+              >
+                Editar canción
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<DeleteIcon fontSize="small" />}
+                onClick={() => requestDelete(song)}
+                fullWidth
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: 700,
+                  textTransform: "none",
+                  color: "rgba(255,255,255,0.88)",
+                  borderColor: "rgba(255,255,255,0.45)",
+                  py: 1.05,
+                  "&:hover": {
+                    borderColor: "rgba(255,255,255,0.75)",
+                    backgroundColor: "rgba(255,255,255,0.12)",
+                  },
+                }}
+              >
+                Eliminar
+              </Button>
+            </Stack>
+          </Stack>
+        </Paper>
+      );
+    });
+  };
+
   return (
     <>
       <div className="ocean-background" />
@@ -540,8 +823,11 @@ export default function AdminDashboard({
             sx={{
               p: { xs: 3, md: 5 },
               borderRadius: 4,
-              backdropFilter: "blur(12px)",
-              backgroundColor: "rgba(255,255,255,0.9)",
+              backdropFilter: "blur(14px)",
+              background:
+                "linear-gradient(155deg, rgba(255,255,255,0.94) 0%, rgba(244,249,255,0.9) 42%, rgba(229,240,255,0.86) 100%)",
+              border: "1px solid rgba(31,60,122,0.08)",
+              boxShadow: "0 42px 68px -32px rgba(31,60,122,0.25)",
             }}
           >
             <Stack spacing={3}>
@@ -630,106 +916,196 @@ export default function AdminDashboard({
                     </Alert>
                   )}
 
-                  <Stack spacing={2}>
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      spacing={2}
-                      justifyContent="space-between"
-                      alignItems={{ xs: "stretch", md: "center" }}
-                    >
-                      <TextField
-                        label="Buscar canciones"
-                        placeholder="Busca por artista, canción o enlace"
-                        value={searchInput}
-                        onChange={(event) => setSearchInput(event.target.value)}
-                        fullWidth
-                        disabled={!supabaseConfigured}
-                      />
+                  <Box
+                    sx={{
+                      background: {
+                        xs: "linear-gradient(135deg, rgba(63,118,255,0.08) 0%, rgba(31,60,122,0.14) 100%)",
+                        md: "transparent",
+                      },
+                      borderRadius: { xs: 4, md: 2 },
+                      px: { xs: 2.5, md: 0 },
+                      py: { xs: 2.5, md: 0 },
+                      border: {
+                        xs: "1px solid rgba(31,60,122,0.2)",
+                        md: "none",
+                      },
+                      boxShadow: {
+                        xs: "0 20px 40px -30px rgba(31,60,122,0.45)",
+                        md: "none",
+                      },
+                      backdropFilter: { xs: "blur(16px)", md: "none" },
+                    }}
+                  >
+                    <Stack spacing={2}>
                       <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="flex-end"
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={2}
+                        justifyContent="space-between"
+                        alignItems={{ xs: "stretch", md: "center" }}
                       >
-                        <Tooltip title="Recargar lista">
-                          <span>
-                            <IconButton
-                              color="primary"
-                              onClick={handleRefresh}
-                              disabled={!supabaseConfigured || loading}
-                            >
-                              <RefreshIcon />
-                            </IconButton>
-                          </span>
-                        </Tooltip>
-                        <Button
-                          variant="contained"
-                          startIcon={<AddCircleIcon />}
-                          onClick={openCreateForm}
+                        <TextField
+                          label="Buscar canciones"
+                          placeholder="Busca por artista, canción o enlace"
+                          value={searchInput}
+                          onChange={(event) =>
+                            setSearchInput(event.target.value)
+                          }
+                          fullWidth
                           disabled={!supabaseConfigured}
-                          sx={{ fontWeight: 700 }}
+                        />
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent="flex-end"
+                          sx={{
+                            width: { xs: "100%", md: "auto" },
+                            flexWrap: "wrap",
+                            gap: { xs: 1, md: 0 },
+                          }}
                         >
-                          Nueva canción
+                          <Tooltip title="Recargar lista">
+                            <span>
+                              <IconButton
+                                color="primary"
+                                onClick={handleRefresh}
+                                disabled={!supabaseConfigured || loading}
+                                sx={{
+                                  width: { xs: 48, md: 40 },
+                                  height: { xs: 48, md: 40 },
+                                }}
+                              >
+                                <RefreshIcon />
+                              </IconButton>
+                            </span>
+                          </Tooltip>
+                          <Button
+                            variant="contained"
+                            startIcon={<AddCircleIcon />}
+                            onClick={openCreateForm}
+                            disabled={!supabaseConfigured}
+                            sx={{
+                              fontWeight: 700,
+                              width: { xs: "100%", sm: "auto" },
+                              display: { xs: "none", sm: "inline-flex" },
+                            }}
+                          >
+                            Nueva canción
+                          </Button>
+                        </Stack>
+                      </Stack>
+
+                      <Stack
+                        direction={{ xs: "column", md: "row" }}
+                        spacing={2}
+                        alignItems={{ xs: "stretch", md: "center" }}
+                      >
+                        <TextField
+                          label="Filtrar por año"
+                          type="number"
+                          value={yearInput}
+                          onChange={handleYearInputChange}
+                          placeholder="Ej: 1994"
+                          InputLabelProps={{ shrink: true }}
+                          inputProps={{ min: 0 }}
+                          sx={{
+                            width: { xs: "100%", md: "auto" },
+                            maxWidth: { md: 220 },
+                          }}
+                          disabled={!supabaseConfigured}
+                        />
+                        <TextField
+                          select
+                          label="Ordenar por"
+                          value={sortOption}
+                          onChange={(event) =>
+                            handleSortOptionChange(
+                              event.target.value as SortOption
+                            )
+                          }
+                          sx={{
+                            width: { xs: "100%", md: "auto" },
+                            minWidth: { md: 220 },
+                          }}
+                          disabled={!supabaseConfigured}
+                        >
+                          {SORT_OPTIONS.map((option) => (
+                            <MenuItem key={option.value} value={option.value}>
+                              {option.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                        <Button
+                          variant="outlined"
+                          onClick={handleClearFilters}
+                          disabled={!filtersActive || !supabaseConfigured}
+                          fullWidth={isSmallScreen}
+                          sx={{
+                            alignSelf: { xs: "stretch", md: "flex-start" },
+                          }}
+                        >
+                          Limpiar filtros
                         </Button>
                       </Stack>
                     </Stack>
+                  </Box>
 
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      spacing={2}
-                      alignItems={{ xs: "stretch", md: "center" }}
+                  <Divider sx={{ borderColor: "rgba(31,60,122,0.1)" }} />
+
+                  <Paper
+                    elevation={0}
+                    sx={{
+                      overflow: "hidden",
+                      borderRadius: { xs: 4, md: 3 },
+                      backgroundColor: {
+                        xs: "rgba(255,255,255,0.08)",
+                        md: "rgba(255,255,255,0.65)",
+                      },
+                      border: {
+                        xs: "1px solid rgba(255,255,255,0.16)",
+                        md: "1px solid rgba(31,60,122,0.08)",
+                      },
+                      backdropFilter: { xs: "blur(20px)", md: "none" },
+                      boxShadow: {
+                        xs: "0 24px 52px -36px rgba(31,60,122,0.55)",
+                        md: "0 20px 45px -40px rgba(31,60,122,0.4)",
+                      },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: { xs: "flex", md: "none" },
+                        flexDirection: "column",
+                        gap: 2,
+                        py: 1,
+                      }}
                     >
-                      <TextField
-                        label="Filtrar por año"
-                        type="number"
-                        value={yearInput}
-                        onChange={handleYearInputChange}
-                        placeholder="Ej: 1994"
-                        InputLabelProps={{ shrink: true }}
-                        inputProps={{ min: 0 }}
+                      {renderMobileSongCards()}
+                    </Box>
+                    <TableContainer
+                      sx={{ display: { xs: "none", md: "block" } }}
+                    >
+                      <Table
+                        size="medium"
                         sx={{
-                          width: { xs: "100%", md: "auto" },
-                          maxWidth: { md: 220 },
+                          "& th": {
+                            textTransform: "uppercase",
+                            letterSpacing: 1,
+                            fontWeight: 700,
+                            fontSize: 12,
+                            color: "rgba(31,60,122,0.75)",
+                          },
+                          "& tbody td": {
+                            fontWeight: 500,
+                            color: "rgba(15,23,42,0.82)",
+                          },
                         }}
-                        disabled={!supabaseConfigured}
-                      />
-                      <TextField
-                        select
-                        label="Ordenar por"
-                        value={sortOption}
-                        onChange={(event) =>
-                          handleSortOptionChange(
-                            event.target.value as SortOption
-                          )
-                        }
-                        sx={{
-                          width: { xs: "100%", md: "auto" },
-                          minWidth: { md: 220 },
-                        }}
-                        disabled={!supabaseConfigured}
                       >
-                        {SORT_OPTIONS.map((option) => (
-                          <MenuItem key={option.value} value={option.value}>
-                            {option.label}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                      <Button
-                        variant="outlined"
-                        onClick={handleClearFilters}
-                        disabled={!filtersActive || !supabaseConfigured}
-                        sx={{ alignSelf: { xs: "stretch", md: "flex-start" } }}
-                      >
-                        Limpiar filtros
-                      </Button>
-                    </Stack>
-                  </Stack>
-
-                  <Divider />
-
-                  <Paper elevation={0} sx={{ overflow: "hidden" }}>
-                    <TableContainer>
-                      <Table size="medium">
-                        <TableHead>
+                        <TableHead
+                          sx={{
+                            background:
+                              "linear-gradient(135deg, rgba(31,60,122,0.08) 0%, rgba(99,213,245,0.12) 100%)",
+                          }}
+                        >
                           <TableRow>
                             <TableCell>ID</TableCell>
                             <TableCell>Artista</TableCell>
@@ -757,6 +1133,22 @@ export default function AdminDashboard({
                         }`
                       }
                       disabled={!supabaseConfigured}
+                      sx={{
+                        display: { xs: "flex", md: "block" },
+                        flexDirection: { xs: "column", md: "row" },
+                        alignItems: { xs: "stretch", md: "center" },
+                        gap: { xs: 1, md: 0 },
+                        px: { xs: 1, md: 0 },
+                        backgroundColor: {
+                          xs: "rgba(255,255,255,0.12)",
+                          md: "transparent",
+                        },
+                        backdropFilter: { xs: "blur(12px)", md: "none" },
+                        borderTop: {
+                          xs: "1px solid rgba(255,255,255,0.18)",
+                          md: "1px solid rgba(31,60,122,0.08)",
+                        },
+                      }}
                     />
                   </Paper>
                 </>
@@ -790,6 +1182,30 @@ export default function AdminDashboard({
         </Container>
       </Box>
 
+      <Zoom in={isSmallScreen && activeTab === "songs"} unmountOnExit>
+        <Fab
+          color="primary"
+          onClick={openCreateForm}
+          aria-label="Agregar canción"
+          sx={{
+            position: "fixed",
+            bottom: { xs: 88, sm: 32 },
+            right: { xs: 24, sm: 32 },
+            zIndex: 1300,
+            background:
+              "linear-gradient(135deg, #1f3c7a 0%, #497bff 55%, #63d5f5 100%)",
+            boxShadow: "0 26px 48px rgba(49,97,209,0.45)",
+            "&:hover": {
+              background:
+                "linear-gradient(135deg, #23468f 0%, #3b6bff 55%, #4fc8f0 100%)",
+              boxShadow: "0 30px 54px rgba(49,97,209,0.55)",
+            },
+          }}
+        >
+          <AddIcon />
+        </Fab>
+      </Zoom>
+
       <SongFormDialog
         open={formOpen}
         mode={formMode}
@@ -799,7 +1215,11 @@ export default function AdminDashboard({
         loading={formLoading}
       />
 
-      <Dialog open={Boolean(deleteTarget)} onClose={cancelDelete}>
+      <Dialog
+        open={Boolean(deleteTarget)}
+        onClose={cancelDelete}
+        fullScreen={isSmallScreen}
+      >
         <DialogTitle>Eliminar canción</DialogTitle>
         <DialogContent>
           <Typography>
