@@ -48,6 +48,8 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import DownloadIcon from "@mui/icons-material/Download";
+import * as XLSX from "xlsx";
 
 import SongFormDialog from "./SongFormDialog";
 import SongStatisticsView from "./SongStatisticsView";
@@ -57,6 +59,7 @@ import {
   deleteSong,
   listSongs,
   fetchSongStatistics,
+  fetchAllSongs,
   updateSong,
 } from "../services/songService";
 import type { Song, SongInput, SongStatistics } from "../types";
@@ -114,6 +117,7 @@ export default function AdminDashboard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
+  const [exporting, setExporting] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -446,6 +450,87 @@ export default function AdminDashboard({
   const handleRefresh = () => {
     setReloadToken((prev) => prev + 1);
   };
+
+  const handleDownloadExcel = useCallback(async () => {
+    if (!supabaseConfigured) {
+      setFeedback({
+        severity: "error",
+        message: "Configura Supabase antes de exportar el catálogo.",
+      });
+      setSnackbarOpen(true);
+      return;
+    }
+
+    if (exporting) {
+      return;
+    }
+
+    setExporting(true);
+    try {
+      const allSongs = await fetchAllSongs();
+
+      if (allSongs.length === 0) {
+        setFeedback({
+          severity: "error",
+          message: "No hay canciones disponibles para exportar.",
+        });
+        setSnackbarOpen(true);
+        return;
+      }
+
+      const rows = allSongs.map((song) => [
+        song.artist,
+        song.title,
+        song.year ?? "",
+        song.youtube_url,
+      ]);
+
+      const worksheet = XLSX.utils.aoa_to_sheet([
+        ["ARTISTA", "CANCION", "LANZAMIENTO", "YOUTUBE"],
+        ...rows,
+      ]);
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Canciones");
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const timestamp = new Date().toISOString().split("T")[0];
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `ponchocards-canciones-${timestamp}.xlsx`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+
+      window.setTimeout(() => {
+        URL.revokeObjectURL(url);
+      }, 1000);
+
+      setFeedback({
+        severity: "success",
+        message: "Exportación generada correctamente.",
+      });
+      setSnackbarOpen(true);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "No se pudo generar el archivo de canciones.";
+      setFeedback({ severity: "error", message });
+      setSnackbarOpen(true);
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting, supabaseConfigured]);
 
   const openCreateForm = () => {
     setFormMode("create");
@@ -1092,6 +1177,53 @@ export default function AdminDashboard({
                                   className="button-label"
                                 >
                                   Recargar
+                                </Typography>
+                              </Button>
+                            </Box>
+                          </Tooltip>
+                          <Tooltip title="Descargar Excel" disableInteractive>
+                            <Box
+                              component="span"
+                              sx={{ display: "inline-flex" }}
+                            >
+                              <Button
+                                variant="outlined"
+                                startIcon={
+                                  exporting ? (
+                                    <CircularProgress
+                                      size={18}
+                                      color="inherit"
+                                    />
+                                  ) : (
+                                    <DownloadIcon />
+                                  )
+                                }
+                                onClick={handleDownloadExcel}
+                                disabled={!supabaseConfigured || exporting}
+                                aria-label="Descargar catálogo"
+                                sx={{
+                                  ...iconActionBaseStyles,
+                                  px: { xs: 2.6, sm: 0 },
+                                  borderColor: "rgba(31,60,122,0.45)",
+                                  color: "rgba(31,60,122,0.9)",
+                                  backgroundColor: "rgba(245,248,255,0.92)",
+                                  "&:hover": {
+                                    borderColor: "rgba(31,60,122,0.85)",
+                                    backgroundColor: "rgba(236,243,255,0.96)",
+                                    boxShadow:
+                                      "0 18px 36px -18px rgba(31,60,122,0.35)",
+                                  },
+                                  "&.Mui-disabled": {
+                                    opacity: 0.55,
+                                    boxShadow: "none",
+                                  },
+                                }}
+                              >
+                                <Typography
+                                  component="span"
+                                  className="button-label"
+                                >
+                                  Exportar
                                 </Typography>
                               </Button>
                             </Box>

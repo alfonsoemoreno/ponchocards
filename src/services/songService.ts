@@ -2,6 +2,7 @@ import { getSupabaseClient } from "../lib/supabaseClient";
 import type { Song, SongInput, SongStatistics } from "../types";
 
 const SONG_FIELDS = "id, artist, title, year, youtube_url";
+const EXPORT_PAGE_SIZE = 1000;
 
 function normalizeSong(raw: Record<string, unknown>): Song {
   const yearValue = raw.year;
@@ -275,4 +276,36 @@ export async function fetchSongStatistics(): Promise<SongStatistics> {
     decadesLeastCommon,
     artistsMostCommon,
   };
+}
+
+export async function fetchAllSongs(): Promise<Song[]> {
+  const supabase = getSupabaseClient();
+  const collected: Song[] = [];
+
+  for (let from = 0; ; from += EXPORT_PAGE_SIZE) {
+    const to = from + EXPORT_PAGE_SIZE - 1;
+    const { data, error } = await supabase
+      .from("songs")
+      .select(SONG_FIELDS)
+      .order("id", { ascending: true })
+      .range(from, to);
+
+    if (error) {
+      throw new Error(
+        error.message || "No se pudieron exportar las canciones desde Supabase."
+      );
+    }
+
+    const batch = (data ?? []).map((item) =>
+      normalizeSong(item as Record<string, unknown>)
+    );
+
+    collected.push(...batch);
+
+    if (batch.length < EXPORT_PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return collected;
 }
