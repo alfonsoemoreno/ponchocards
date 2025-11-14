@@ -1356,9 +1356,7 @@ export default function AdminDashboard({
                                   <Typography
                                     component="span"
                                     className="button-label"
-                                  >
-                                    Recargar
-                                  </Typography>
+                                  ></Typography>
                                 ) : null}
                               </Button>
                             </Box>
@@ -1431,9 +1429,7 @@ export default function AdminDashboard({
                                   <Typography
                                     component="span"
                                     className="button-label"
-                                  >
-                                    Importar
-                                  </Typography>
+                                  ></Typography>
                                 ) : null}
                               </Button>
                             </Box>
@@ -1506,9 +1502,7 @@ export default function AdminDashboard({
                                   <Typography
                                     component="span"
                                     className="button-label"
-                                  >
-                                    Exportar
-                                  </Typography>
+                                  ></Typography>
                                 ) : null}
                               </Button>
                             </Box>
