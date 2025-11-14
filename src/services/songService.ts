@@ -163,6 +163,26 @@ export async function updateSong(
   return normalizeSong((data ?? {}) as Record<string, unknown>);
 }
 
+export async function bulkUpsertSongs(payload: SongInput[]): Promise<void> {
+  if (payload.length === 0) {
+    return;
+  }
+
+  const supabase = getSupabaseClient();
+  const sanitized = payload.map(sanitizeInput);
+
+  const { error } = await supabase
+    .from("songs")
+    .upsert(sanitized, { onConflict: "youtube_url" })
+    .select("id");
+
+  if (error) {
+    throw new Error(
+      error.message || "No se pudieron sincronizar las canciones importadas."
+    );
+  }
+}
+
 export async function deleteSong(id: number): Promise<void> {
   const supabase = getSupabaseClient();
 

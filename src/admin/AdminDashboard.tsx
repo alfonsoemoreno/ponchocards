@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ChangeEvent,
   type SyntheticEvent,
@@ -49,6 +50,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import DownloadIcon from "@mui/icons-material/Download";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
 import * as XLSX from "xlsx";
 
 import SongFormDialog from "./SongFormDialog";
@@ -60,6 +62,7 @@ import {
   listSongs,
   fetchSongStatistics,
   fetchAllSongs,
+  bulkUpsertSongs,
   updateSong,
 } from "../services/songService";
 import type { Song, SongInput, SongStatistics } from "../types";
@@ -118,6 +121,7 @@ export default function AdminDashboard({
   const [error, setError] = useState<string | null>(null);
   const [reloadToken, setReloadToken] = useState(0);
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const [formOpen, setFormOpen] = useState(false);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
@@ -137,6 +141,7 @@ export default function AdminDashboard({
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const iconActionBaseStyles = {
     minWidth: { xs: "auto", sm: 48 },
     height: { xs: 44, sm: 44 },
@@ -286,7 +291,6 @@ export default function AdminDashboard({
         });
         return;
       }
-
       const parsed = Number.parseInt(trimmed, 10);
       if (Number.isNaN(parsed)) {
         return;
@@ -531,6 +535,144 @@ export default function AdminDashboard({
       setExporting(false);
     }
   }, [exporting, supabaseConfigured]);
+
+  const handleImportButtonClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleImportFromExcel = useCallback(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+
+      if (!file) {
+        return;
+      }
+
+      if (!supabaseConfigured) {
+        setFeedback({
+          severity: "error",
+          message: "Configura Supabase antes de importar canciones.",
+        });
+        setSnackbarOpen(true);
+        event.target.value = "";
+        return;
+      }
+
+      setImporting(true);
+
+      try {
+        const data = await file.arrayBuffer();
+        const workbook = XLSX.read(data, { type: "array" });
+        const [firstSheet] = workbook.SheetNames;
+
+        if (!firstSheet) {
+          throw new Error("El archivo no contiene hojas válidas.");
+        }
+
+        const sheet = workbook.Sheets[firstSheet];
+        const matrix = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
+          header: 1,
+          defval: "",
+          blankrows: false,
+        });
+
+        if (matrix.length === 0) {
+          throw new Error("El archivo está vacío.");
+        }
+
+        const headerRow = (matrix[0] ?? []).map((cell) =>
+          String(cell ?? "")
+            .trim()
+            .toUpperCase()
+        );
+
+        const findIndex = (label: string) =>
+          headerRow.findIndex((value) => value === label);
+
+        const artistIndex = findIndex("ARTISTA");
+        const titleIndex = findIndex("CANCION");
+        const yearIndex = findIndex("LANZAMIENTO");
+        const youtubeIndex = findIndex("YOUTUBE");
+
+        if (artistIndex === -1 || titleIndex === -1 || youtubeIndex === -1) {
+          throw new Error(
+            "La plantilla debe incluir las columnas ARTISTA, CANCION y YOUTUBE."
+          );
+        }
+
+        const rows = matrix.slice(1);
+        const payload: SongInput[] = [];
+        let skipped = 0;
+
+        rows.forEach((entry) => {
+          const cells = Array.isArray(entry) ? entry : [];
+          const artist = String(cells[artistIndex] ?? "").trim();
+          const title = String(cells[titleIndex] ?? "").trim();
+          const youtubeUrl = String(cells[youtubeIndex] ?? "").trim();
+
+          if (!artist || !title || !youtubeUrl) {
+            if (
+              !cells.every((value) => String(value ?? "").trim().length === 0)
+            ) {
+              skipped += 1;
+            }
+            return;
+          }
+
+          let year: number | null = null;
+          if (yearIndex !== -1) {
+            const rawYear = cells[yearIndex];
+            if (typeof rawYear === "number") {
+              year = Number.isFinite(rawYear) ? Math.trunc(rawYear) : null;
+            } else if (
+              typeof rawYear === "string" &&
+              rawYear.trim().length > 0
+            ) {
+              const parsed = Number.parseInt(rawYear.trim(), 10);
+              year = Number.isNaN(parsed) ? null : parsed;
+            }
+          }
+
+          payload.push({
+            artist,
+            title,
+            youtube_url: youtubeUrl,
+            year,
+          });
+        });
+
+        if (payload.length === 0) {
+          throw new Error(
+            "No se encontraron registros válidos en el archivo proporcionado."
+          );
+        }
+
+        await bulkUpsertSongs(payload);
+
+        const skippedMessage = skipped
+          ? `, ${skipped} filas omitidas por datos incompletos`
+          : "";
+
+        setFeedback({
+          severity: "success",
+          message: `Importación completada: ${payload.length} canciones procesadas${skippedMessage}.`,
+        });
+        setSnackbarOpen(true);
+        setReloadToken((prev) => prev + 1);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "No se pudo importar el catálogo desde Excel.";
+        setFeedback({ severity: "error", message });
+        setSnackbarOpen(true);
+      } finally {
+        setImporting(false);
+        event.target.value = "";
+      }
+    },
+    [supabaseConfigured]
+  );
 
   const openCreateForm = () => {
     setFormMode("create");
@@ -938,6 +1080,13 @@ export default function AdminDashboard({
 
   return (
     <>
+      <input
+        hidden
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        onChange={handleImportFromExcel}
+      />
       <div className="ocean-background" />
       <div className="ocean-blur" />
       <Box
@@ -1177,6 +1326,53 @@ export default function AdminDashboard({
                                   className="button-label"
                                 >
                                   Recargar
+                                </Typography>
+                              </Button>
+                            </Box>
+                          </Tooltip>
+                          <Tooltip title="Importar Excel" disableInteractive>
+                            <Box
+                              component="span"
+                              sx={{ display: "inline-flex" }}
+                            >
+                              <Button
+                                variant="outlined"
+                                startIcon={
+                                  importing ? (
+                                    <CircularProgress
+                                      size={18}
+                                      color="inherit"
+                                    />
+                                  ) : (
+                                    <UploadFileIcon />
+                                  )
+                                }
+                                onClick={handleImportButtonClick}
+                                disabled={!supabaseConfigured || importing}
+                                aria-label="Importar catálogo"
+                                sx={{
+                                  ...iconActionBaseStyles,
+                                  px: { xs: 2.6, sm: 0 },
+                                  borderColor: "rgba(31,60,122,0.45)",
+                                  color: "rgba(31,60,122,0.9)",
+                                  backgroundColor: "rgba(245,248,255,0.92)",
+                                  "&:hover": {
+                                    borderColor: "rgba(31,60,122,0.85)",
+                                    backgroundColor: "rgba(236,243,255,0.96)",
+                                    boxShadow:
+                                      "0 18px 36px -18px rgba(31,60,122,0.35)",
+                                  },
+                                  "&.Mui-disabled": {
+                                    opacity: 0.55,
+                                    boxShadow: "none",
+                                  },
+                                }}
+                              >
+                                <Typography
+                                  component="span"
+                                  className="button-label"
+                                >
+                                  Importar
                                 </Typography>
                               </Button>
                             </Box>
