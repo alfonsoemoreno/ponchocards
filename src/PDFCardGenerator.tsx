@@ -466,12 +466,13 @@ export default function PDFCardGenerator() {
                 variant="outlined"
                 sx={{
                   borderRadius: 4,
-                  bgcolor: alpha("#0b1223", 0.35),
-                  borderColor: alpha("#f8fbff", 0.12),
+                  bgcolor: alpha("#f8fbff", 0.96),
+                  color: alpha(theme.palette.text.primary, 0.92),
+                  borderColor: alpha(theme.palette.primary.dark, 0.15),
                   px: { xs: 2, sm: 3 },
                   py: { xs: 2.5, sm: 3.5 },
-                  boxShadow: "0 20px 50px rgba(9, 17, 35, 0.45)",
-                  backdropFilter: "blur(16px)",
+                  boxShadow: "0 28px 55px rgba(15, 23, 42, 0.18)",
+                  backdropFilter: "blur(10px)",
                 }}
               >
                 <Typography
@@ -481,7 +482,7 @@ export default function PDFCardGenerator() {
                     fontWeight: 700,
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
-                    color: alpha("#f8fbff", 0.88),
+                    color: theme.palette.primary.dark,
                   }}
                 >
                   Ejemplo de archivo Excel
@@ -492,16 +493,19 @@ export default function PDFCardGenerator() {
                     width: "100%",
                     borderCollapse: "collapse",
                     fontSize: { xs: 13, sm: 15 },
-                    color: alpha("#f8fbff", 0.9),
-                    background: alpha("#0f172a", 0.35),
+                    color: alpha(theme.palette.text.primary, 0.88),
+                    background: alpha("#ffffff", 0.9),
                     borderRadius: 3,
                     overflow: "hidden",
-                    border: `1px solid ${alpha("#f8fbff", 0.08)}`,
+                    border: `1px solid ${alpha(
+                      theme.palette.primary.dark,
+                      0.12
+                    )}`,
                   }}
                 >
                   <Box
                     component="thead"
-                    sx={{ background: alpha("#1d2f57", 0.58) }}
+                    sx={{ background: alpha(theme.palette.primary.main, 0.12) }}
                   >
                     <Box component="tr">
                       {["ARTISTA", "CANCION", "LANZAMIENTO", "YOUTUBE"].map(
@@ -510,13 +514,17 @@ export default function PDFCardGenerator() {
                             key={header}
                             component="th"
                             sx={{
-                              border: `1px solid ${alpha("#f8fbff", 0.12)}`,
+                              border: `1px solid ${alpha(
+                                theme.palette.primary.dark,
+                                0.14
+                              )}`,
                               px: 1.5,
                               py: 1,
                               fontWeight: 700,
                               letterSpacing: "0.06em",
                               textTransform: "uppercase",
                               textAlign: "left",
+                              color: theme.palette.primary.dark,
                             }}
                           >
                             {header}
@@ -546,7 +554,10 @@ export default function PDFCardGenerator() {
                             key={value}
                             component="td"
                             sx={{
-                              border: `1px solid ${alpha("#f8fbff", 0.12)}`,
+                              border: `1px solid ${alpha(
+                                theme.palette.primary.dark,
+                                0.12
+                              )}`,
                               px: 1.5,
                               py: 1,
                               fontWeight: 500,
@@ -565,7 +576,7 @@ export default function PDFCardGenerator() {
                   spacing={1.5}
                   sx={{
                     mt: { xs: 2.5, sm: 3 },
-                    color: alpha("#f8fbff", 0.78),
+                    color: alpha(theme.palette.text.secondary, 0.95),
                     fontSize: { xs: 14, sm: 15 },
                     lineHeight: 1.8,
                   }}

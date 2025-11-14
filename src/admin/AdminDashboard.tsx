@@ -894,6 +894,17 @@ export default function AdminDashboard({
                     variant="outlined"
                     startIcon={<ArrowBackIcon />}
                     onClick={onExit}
+                    sx={{
+                      fontWeight: 600,
+                      borderColor: "rgba(31,60,122,0.65)",
+                      color: "rgba(15,23,42,0.92)",
+                      backgroundColor: "rgba(248,250,255,0.92)",
+                      "&:hover": {
+                        borderColor: "rgba(31,60,122,0.95)",
+                        backgroundColor: "rgba(236,243,255,0.96)",
+                        color: "rgba(15,23,42,0.98)",
+                      },
+                    }}
                   >
                     Volver al generador
                   </Button>
@@ -1193,7 +1204,18 @@ export default function AdminDashboard({
                       startIcon={<RefreshIcon />}
                       onClick={handleRefresh}
                       disabled={statsLoading || !supabaseConfigured}
-                      sx={{ alignSelf: { xs: "stretch", sm: "flex-end" } }}
+                      sx={{
+                        alignSelf: { xs: "stretch", sm: "flex-end" },
+                        fontWeight: 600,
+                        borderColor: "rgba(31,60,122,0.65)",
+                        color: "rgba(15,23,42,0.92)",
+                        backgroundColor: "rgba(248,250,255,0.92)",
+                        "&:hover": {
+                          borderColor: "rgba(31,60,122,0.95)",
+                          backgroundColor: "rgba(236,243,255,0.96)",
+                          color: "rgba(15,23,42,0.98)",
+                        },
+                      }}
                     >
                       Actualizar estadísticas
                     </Button>
