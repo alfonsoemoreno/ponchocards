@@ -133,6 +133,28 @@ export default function AdminDashboard({
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const iconActionBaseStyles = {
+    minWidth: { xs: "auto", sm: 48 },
+    height: { xs: 44, sm: 44 },
+    px: { xs: 2.3, sm: 0 },
+    borderRadius: 5,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: { xs: 1, sm: 0 },
+    transition: "all 180ms ease",
+    fontWeight: 600,
+    "& .MuiButton-startIcon": {
+      mr: { xs: 1, sm: 0 },
+      ml: { sm: 0 },
+      "& svg": {
+        fontSize: 22,
+      },
+    },
+    "& .button-label": {
+      display: { xs: "inline", sm: "none" },
+    },
+  } as const;
   const mobileAccents = useMemo(
     () => [
       {
@@ -293,8 +315,8 @@ export default function AdminDashboard({
         const { songs: fetchedSongs, total: fetchedTotal } = await listSongs({
           page,
           pageSize: rowsPerPage,
-          search: searchTerm,
-          year: yearFilter ?? undefined,
+          search: searchTerm || undefined,
+          year: yearFilter,
           sortBy: sortConfig.sortBy,
           sortDirection: sortConfig.direction,
         });
@@ -331,10 +353,10 @@ export default function AdminDashboard({
     page,
     rowsPerPage,
     searchTerm,
+    sortConfig,
+    yearFilter,
     reloadToken,
     supabaseConfigured,
-    yearFilter,
-    sortConfig,
   ]);
 
   useEffect(() => {
@@ -841,15 +863,22 @@ export default function AdminDashboard({
           display: "flex",
           justifyContent: "center",
           alignItems: "flex-start",
-          py: { xs: 6, md: 8 },
-          px: { xs: 2, md: 4 },
+          py: { xs: 3, sm: 4, md: 8 },
+          px: { xs: 1.25, sm: 2, md: 4 },
         }}
       >
-        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+        <Container
+          maxWidth="lg"
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            px: { xs: 1, sm: 2, md: 4 },
+          }}
+        >
           <Paper
             elevation={6}
             sx={{
-              p: { xs: 3, md: 5 },
+              p: { xs: 2, sm: 3, md: 5 },
               borderRadius: 4,
               backdropFilter: "blur(14px)",
               background:
@@ -889,33 +918,60 @@ export default function AdminDashboard({
                     </Typography>
                   ) : null}
                 </Box>
-                <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<ArrowBackIcon />}
-                    onClick={onExit}
-                    sx={{
-                      fontWeight: 600,
-                      borderColor: "rgba(31,60,122,0.65)",
-                      color: "rgba(15,23,42,0.92)",
-                      backgroundColor: "rgba(248,250,255,0.92)",
-                      "&:hover": {
-                        borderColor: "rgba(31,60,122,0.95)",
-                        backgroundColor: "rgba(236,243,255,0.96)",
-                        color: "rgba(15,23,42,0.98)",
-                      },
-                    }}
-                  >
-                    Volver al generador
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    startIcon={<LogoutIcon />}
-                    onClick={onSignOut}
-                  >
-                    Cerrar sesión
-                  </Button>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={1}
+                  alignItems={{ xs: "stretch", sm: "center" }}
+                >
+                  <Tooltip title="Volver al generador" disableInteractive>
+                    <Box component="span" sx={{ display: "inline-flex" }}>
+                      <Button
+                        variant="outlined"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={onExit}
+                        aria-label="Volver al generador"
+                        sx={{
+                          ...iconActionBaseStyles,
+                          borderColor: "rgba(31,60,122,0.55)",
+                          color: "rgba(15,23,42,0.9)",
+                          backgroundColor: "rgba(248,250,255,0.96)",
+                          "&:hover": {
+                            borderColor: "rgba(31,60,122,0.95)",
+                            backgroundColor: "rgba(236,243,255,0.98)",
+                            color: "rgba(15,23,42,0.98)",
+                            boxShadow: "0 12px 24px -12px rgba(31,60,122,0.35)",
+                          },
+                        }}
+                      >
+                        <Typography component="span" className="button-label">
+                          Volver al generador
+                        </Typography>
+                      </Button>
+                    </Box>
+                  </Tooltip>
+                  <Tooltip title="Cerrar sesión" disableInteractive>
+                    <Box component="span" sx={{ display: "inline-flex" }}>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        startIcon={<LogoutIcon />}
+                        onClick={onSignOut}
+                        aria-label="Cerrar sesión"
+                        sx={{
+                          ...iconActionBaseStyles,
+                          px: { xs: 2.4, sm: 0 },
+                          boxShadow: "0 18px 36px -18px rgba(244,67,54,0.55)",
+                          "&:hover": {
+                            boxShadow: "0 22px 42px -18px rgba(244,67,54,0.65)",
+                          },
+                        }}
+                      >
+                        <Typography component="span" className="button-label">
+                          Cerrar sesión
+                        </Typography>
+                      </Button>
+                    </Box>
+                  </Tooltip>
                 </Stack>
               </Stack>
 
@@ -961,9 +1017,9 @@ export default function AdminDashboard({
                         xs: "linear-gradient(135deg, rgba(63,118,255,0.08) 0%, rgba(31,60,122,0.14) 100%)",
                         md: "transparent",
                       },
-                      borderRadius: { xs: 4, md: 2 },
-                      px: { xs: 2.5, md: 0 },
-                      py: { xs: 2.5, md: 0 },
+                      borderRadius: { xs: 3, md: 2 },
+                      px: { xs: 1.5, md: 0 },
+                      py: { xs: 1.75, md: 0 },
                       border: {
                         xs: "1px solid rgba(31,60,122,0.2)",
                         md: "none",
@@ -1002,34 +1058,86 @@ export default function AdminDashboard({
                             gap: { xs: 1, md: 0 },
                           }}
                         >
-                          <Tooltip title="Recargar lista">
-                            <span>
-                              <IconButton
-                                color="primary"
+                          <Tooltip title="Recargar lista" disableInteractive>
+                            <Box
+                              component="span"
+                              sx={{ display: "inline-flex" }}
+                            >
+                              <Button
+                                variant="outlined"
+                                startIcon={<RefreshIcon />}
                                 onClick={handleRefresh}
                                 disabled={!supabaseConfigured || loading}
+                                aria-label="Recargar lista"
                                 sx={{
-                                  width: { xs: 48, md: 40 },
-                                  height: { xs: 48, md: 40 },
+                                  ...iconActionBaseStyles,
+                                  px: { xs: 2.3, sm: 0 },
+                                  borderColor: "rgba(31,60,122,0.45)",
+                                  color: "rgba(31,60,122,0.9)",
+                                  backgroundColor: "rgba(245,248,255,0.9)",
+                                  "&:hover": {
+                                    borderColor: "rgba(31,60,122,0.8)",
+                                    backgroundColor: "rgba(236,242,255,0.95)",
+                                    boxShadow:
+                                      "0 16px 32px -18px rgba(31,60,122,0.35)",
+                                  },
+                                  "&.Mui-disabled": {
+                                    opacity: 0.5,
+                                    boxShadow: "none",
+                                  },
                                 }}
                               >
-                                <RefreshIcon />
-                              </IconButton>
-                            </span>
+                                <Typography
+                                  component="span"
+                                  className="button-label"
+                                >
+                                  Recargar
+                                </Typography>
+                              </Button>
+                            </Box>
                           </Tooltip>
-                          <Button
-                            variant="contained"
-                            startIcon={<AddCircleIcon />}
-                            onClick={openCreateForm}
-                            disabled={!supabaseConfigured}
-                            sx={{
-                              fontWeight: 700,
-                              width: { xs: "100%", sm: "auto" },
-                              display: { xs: "none", sm: "inline-flex" },
-                            }}
-                          >
-                            Nueva canción
-                          </Button>
+                          <Tooltip title="Nueva canción" disableInteractive>
+                            <Box
+                              component="span"
+                              sx={{ display: "inline-flex" }}
+                            >
+                              <Button
+                                variant="contained"
+                                startIcon={<AddCircleIcon />}
+                                onClick={openCreateForm}
+                                disabled={!supabaseConfigured}
+                                aria-label="Nueva canción"
+                                sx={{
+                                  ...iconActionBaseStyles,
+                                  display: { xs: "none", sm: "inline-flex" },
+                                  px: { xs: 2.6, sm: 0 },
+                                  background:
+                                    "linear-gradient(135deg, rgba(31,60,122,0.95) 0%, rgba(63,142,252,0.92) 55%, rgba(99,213,245,0.94) 100%)",
+                                  border: "1px solid rgba(118,181,255,0.5)",
+                                  boxShadow:
+                                    "0 22px 44px -20px rgba(46,124,227,0.5)",
+                                  "&:hover": {
+                                    background:
+                                      "linear-gradient(135deg, rgba(35,66,126,0.98) 0%, rgba(78,151,255,0.96) 55%, rgba(112,219,250,0.96) 100%)",
+                                    boxShadow:
+                                      "0 26px 52px -20px rgba(46,124,227,0.58)",
+                                  },
+                                  "&.Mui-disabled": {
+                                    backgroundColor: "rgba(191,209,255,0.4)",
+                                    boxShadow: "none",
+                                    borderColor: "rgba(118,181,255,0.2)",
+                                  },
+                                }}
+                              >
+                                <Typography
+                                  component="span"
+                                  className="button-label"
+                                >
+                                  Nueva canción
+                                </Typography>
+                              </Button>
+                            </Box>
+                          </Tooltip>
                         </Stack>
                       </Stack>
 
