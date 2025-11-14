@@ -143,6 +143,13 @@ export default function AdminDashboard({
         chipBg: "rgba(255,255,255,0.18)",
         chipColor: "#E8F3FF",
         accentText: "rgba(255,255,255,0.78)",
+        buttonGradient:
+          "linear-gradient(135deg, rgba(28,54,110,0.92) 0%, rgba(58,131,238,0.9) 55%, rgba(92,201,237,0.92) 100%)",
+        buttonHoverGradient:
+          "linear-gradient(135deg, rgba(35,66,126,0.96) 0%, rgba(78,151,255,0.94) 55%, rgba(112,219,250,0.95) 100%)",
+        buttonShadow: "0 22px 42px rgba(30,72,150,0.48)",
+        outlineBorder: "rgba(178,209,255,0.6)",
+        outlineHover: "rgba(104,162,255,0.2)",
       },
       {
         gradient:
@@ -152,6 +159,13 @@ export default function AdminDashboard({
         chipBg: "rgba(27,7,53,0.35)",
         chipColor: "#FFE7FF",
         accentText: "rgba(255,238,255,0.78)",
+        buttonGradient:
+          "linear-gradient(135deg, rgba(97,54,235,0.95) 0%, rgba(165,90,241,0.9) 55%, rgba(240,150,233,0.95) 100%)",
+        buttonHoverGradient:
+          "linear-gradient(135deg, rgba(118,73,255,0.98) 0%, rgba(191,108,255,0.94) 55%, rgba(255,183,244,0.98) 100%)",
+        buttonShadow: "0 22px 42px rgba(120,63,215,0.48)",
+        outlineBorder: "rgba(233,193,255,0.58)",
+        outlineHover: "rgba(204,153,255,0.24)",
       },
       {
         gradient:
@@ -161,6 +175,13 @@ export default function AdminDashboard({
         chipBg: "rgba(4,37,46,0.4)",
         chipColor: "#D8FFF4",
         accentText: "rgba(227,255,247,0.78)",
+        buttonGradient:
+          "linear-gradient(135deg, rgba(6,86,96,0.95) 0%, rgba(26,158,168,0.92) 55%, rgba(116,222,193,0.95) 100%)",
+        buttonHoverGradient:
+          "linear-gradient(135deg, rgba(8,108,120,0.98) 0%, rgba(32,182,192,0.95) 55%, rgba(138,235,207,0.98) 100%)",
+        buttonShadow: "0 22px 42px rgba(22,142,152,0.44)",
+        outlineBorder: "rgba(155,235,214,0.55)",
+        outlineHover: "rgba(76,208,189,0.22)",
       },
       {
         gradient:
@@ -170,6 +191,13 @@ export default function AdminDashboard({
         chipBg: "rgba(29,0,52,0.35)",
         chipColor: "#FFE8F4",
         accentText: "rgba(255,246,255,0.8)",
+        buttonGradient:
+          "linear-gradient(135deg, rgba(126,34,204,0.95) 0%, rgba(240,98,164,0.92) 55%, rgba(255,179,126,0.95) 100%)",
+        buttonHoverGradient:
+          "linear-gradient(135deg, rgba(149,52,224,0.98) 0%, rgba(252,125,185,0.95) 55%, rgba(255,197,152,0.98) 100%)",
+        buttonShadow: "0 22px 42px rgba(167,55,195,0.46)",
+        outlineBorder: "rgba(255,204,226,0.58)",
+        outlineHover: "rgba(255,170,210,0.24)",
       },
     ],
     []
@@ -722,8 +750,8 @@ export default function AdminDashboard({
                   startIcon={<InfoOutlinedIcon />}
                   fullWidth
                   sx={{
-                    color: "#ffffff",
-                    borderColor: "rgba(255,255,255,0.5)",
+                    color: accent.accentText,
+                    borderColor: accent.outlineBorder,
                     borderRadius: 2,
                     fontWeight: 600,
                     textTransform: "none",
@@ -731,8 +759,8 @@ export default function AdminDashboard({
                     px: 1,
                     py: 1,
                     "&:hover": {
-                      borderColor: "rgba(255,255,255,0.8)",
-                      backgroundColor: "rgba(255,255,255,0.12)",
+                      borderColor: accent.outlineBorder,
+                      backgroundColor: accent.outlineHover,
                     },
                   }}
                 >
@@ -762,13 +790,13 @@ export default function AdminDashboard({
                   borderRadius: 2,
                   fontWeight: 700,
                   textTransform: "none",
-                  backgroundColor: "rgba(255,255,255,0.18)",
+                  backgroundImage: accent.buttonGradient,
                   color: "#ffffff",
-                  boxShadow: "0 18px 36px rgba(0,0,0,0.18)",
+                  boxShadow: accent.buttonShadow,
                   py: 1.05,
                   "&:hover": {
-                    backgroundColor: "rgba(255,255,255,0.28)",
-                    boxShadow: "0 18px 36px rgba(0,0,0,0.28)",
+                    backgroundImage: accent.buttonHoverGradient,
+                    boxShadow: accent.buttonShadow,
                   },
                 }}
               >

@@ -2,7 +2,16 @@ import { useState } from "react";
 import jsPDF from "jspdf";
 import * as XLSX from "xlsx";
 import { generateQRCodeDataURL } from "./qrUtils";
-import { Box, Button, Typography, Alert, Container } from "@mui/material";
+import {
+  Alert,
+  Box,
+  Button,
+  Container,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -156,6 +165,7 @@ async function generatePDF(rows: ExcelRow[]) {
 export default function PDFCardGenerator() {
   const [error, setError] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const theme = useTheme();
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     setError("");
@@ -238,367 +248,367 @@ export default function PDFCardGenerator() {
     <>
       <div className="ocean-background" />
       <div className="ocean-blur" />
-      {/* Neon lines animated background */}
-      <Box
-        className="neon-lines"
-        sx={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
-          zIndex: -1,
-        }}
-      >
+      <Box className="neon-lines">
         <Box
           className="neon-line"
           sx={{
-            top: "18%",
-            background: "linear-gradient(90deg, #00fff7, #0ff, #fff)",
-            boxShadow: "0 0 16px #00fff7",
-            animation: "neon-move-right 2.5s linear infinite",
+            top: "15%",
+            background: theme.customGradients.plasma,
+            animation: "neon-move-right 28s ease-in-out infinite",
           }}
         />
         <Box
           className="neon-line"
           sx={{
-            top: "32%",
-            background: "linear-gradient(90deg, #ff00ea, #fff, #ff0)",
-            boxShadow: "0 0 16px #ff00ea",
-            animation: "neon-move-left 3.2s linear infinite",
+            top: "38%",
+            background: theme.customGradients.sunset,
+            animation: "neon-move-left 32s ease-in-out infinite",
           }}
         />
         <Box
           className="neon-line"
           sx={{
-            top: "46%",
-            background: "linear-gradient(90deg, #fff200, #fff, #00ff6a)",
-            boxShadow: "0 0 16px #fff200",
-            animation: "neon-move-right 2.1s linear infinite",
-          }}
-        />
-        <Box
-          className="neon-line"
-          sx={{
-            top: "60%",
-            background: "linear-gradient(90deg, #00ff6a, #fff, #00fff7)",
-            boxShadow: "0 0 16px #00ff6a",
-            animation: "neon-move-left 2.8s linear infinite",
-          }}
-        />
-        <Box
-          className="neon-line"
-          sx={{
-            top: "74%",
-            background: "linear-gradient(90deg, #ff0, #fff, #ff00ea)",
-            boxShadow: "0 0 16px #ff0",
-            animation: "neon-move-right 3.5s linear infinite",
+            top: "62%",
+            background: theme.customGradients.lagoon,
+            animation: "neon-move-right 26s ease-in-out infinite",
           }}
         />
       </Box>
-      {/* Título fijo fuera del contenedor blanco */}
 
       <Container
         maxWidth="lg"
         disableGutters
-        sx={{ px: { xs: 2, md: 4 }, py: { xs: 2, md: 4 } }}
+        sx={{ position: "relative", zIndex: 1, py: { xs: 4, md: 6 } }}
       >
-        <Box
+        <Paper
+          elevation={0}
           sx={{
-            // ensure this container sits above neon-lines
             position: "relative",
-            zIndex: 1,
-            // ensure all inner text is black by default
-            color: "text.primary",
-            width: "100%",
-            bgcolor: "rgba(255,255,255,0.8)",
-            backdropFilter: "blur(8px)",
-            borderRadius: 2,
-            boxShadow: 2,
-            my: { xs: 2, md: 4 },
-            p: { xs: 2, md: 4 },
+            overflow: "hidden",
+            borderRadius: { xs: 4, md: 5 },
+            px: { xs: 2.5, sm: 4, md: 6 },
+            py: { xs: 3, sm: 4, md: 6 },
+            color: "#f8fbff",
+            background: `linear-gradient(145deg, ${alpha(
+              theme.palette.primary.dark,
+              0.78
+            )} 0%, ${alpha(theme.palette.secondary.dark, 0.72)} 48%, ${alpha(
+              theme.palette.info.dark,
+              0.7
+            )} 100%)`,
+            border: "1px solid rgba(255,255,255,0.12)",
+            backdropFilter: "blur(22px)",
+            boxShadow:
+              "0 25px 80px rgba(12, 20, 40, 0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
+            "&::before": {
+              content: "''",
+              position: "absolute",
+              inset: "-40% -40% 30% -40%",
+              background: `radial-gradient(circle at 15% 20%, ${alpha(
+                theme.palette.info.light,
+                0.48
+              )} 0%, transparent 55%), radial-gradient(circle at 88% 18%, ${alpha(
+                theme.palette.secondary.light,
+                0.38
+              )} 0%, transparent 55%), radial-gradient(circle at 45% 82%, ${alpha(
+                theme.palette.success.light,
+                0.42
+              )} 0%, transparent 55%)`,
+              filter: "blur(30px)",
+              opacity: 0.75,
+            },
           }}
         >
-          <Box sx={{ textAlign: "center", mb: 2 }}>
-            <img
-              src="/ponchister_logo.png"
-              alt="Ponchister Logo"
-              style={{
-                maxWidth: "50%",
-                height: "auto",
-                margin: "0 auto",
-              }}
-            />
-          </Box>
-          <Box
-            sx={{
-              mb: 2,
-              display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 2,
-            }}
+          <Stack
+            spacing={{ xs: 3, md: 4 }}
+            sx={{ position: "relative", zIndex: 1 }}
           >
-            {/* Upload button hidden input */}
-            <input
-              hidden
-              accept=".xls,.xlsx"
-              id="upload-excel"
-              type="file"
-              onChange={handleFile}
-            />
-            <label htmlFor="upload-excel">
-              <Button
-                variant="outlined"
-                color="primary"
-                component="span"
-                startIcon={<UploadFileIcon />}
+            <Stack spacing={1.5} alignItems="center">
+              <Box
+                component="img"
+                src="/ponchister_logo.png"
+                alt="Ponchister Logo"
                 sx={{
-                  width: { xs: "100%", sm: "auto" },
-                  fontSize: "1.2rem",
-                  fontWeight: 700,
-                }}
-              >
-                Seleccionar Excel
-              </Button>
-            </label>
-            <Button
-              variant="outlined"
-              color="error"
-              onClick={handleGenerate}
-              startIcon={<PictureAsPdfIcon />}
-              sx={{
-                width: { xs: "100%", sm: "auto" },
-                fontSize: "1.2rem",
-                fontWeight: 700,
-              }}
-            >
-              Generar PDF
-            </Button>
-            <Button
-              variant="outlined"
-              color="success"
-              href="/plantilla.xlsx"
-              download
-              startIcon={<DownloadIcon />}
-              sx={{
-                width: { xs: "100%", sm: "auto" },
-                fontSize: "1.2rem",
-                fontWeight: 700,
-              }}
-            >
-              Descargar Excel
-            </Button>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={handleDownloadSamples}
-              startIcon={<MusicNoteIcon />}
-              sx={{
-                width: { xs: "100%", sm: "auto" },
-                fontSize: "1.2rem",
-                fontWeight: 700,
-              }}
-            >
-              Descargar fichas
-            </Button>
-          </Box>
-          {error && (
-            <Alert
-              severity="error"
-              sx={{ mb: 2, fontSize: { xs: 13, sm: 15 }, borderRadius: 2 }}
-            >
-              {error}
-            </Alert>
-          )}
-          <Typography
-            variant="body2"
-            color="text.primary"
-            sx={{ mt: 2, fontSize: { xs: 14, sm: 16 }, lineHeight: 1.7 }}
-          >
-            Sube un archivo Excel con las columnas <b>ARTISTA</b>,{" "}
-            <b>CANCION</b>, <b>LANZAMIENTO</b>, <b>YOUTUBE</b>.<br />
-            Por cada registro se generarán dos tarjetas numeradas: cara A con la
-            información y cara B con el QR alineado e invertido horizontalmente
-            para coincidir al imprimir doble cara.
-          </Typography>
-          <Box
-            sx={{
-              mt: 3,
-              mb: 2,
-              p: { xs: 1, sm: 2 },
-              bgcolor: "#f6f8fa",
-              borderRadius: 3,
-              boxShadow: "0 1.5px 8px #0001",
-              border: "1px solid #d0d7de",
-            }}
-          >
-            <Typography
-              variant="subtitle1"
-              sx={{
-                mb: 1,
-                fontSize: { xs: 16, sm: 18 },
-                fontWeight: 600,
-                color: "#000",
-              }}
-            >
-              Ejemplo de archivo Excel:
-            </Typography>
-            <Box
-              component="table"
-              sx={{
-                width: "100%",
-                borderCollapse: "collapse",
-                mb: 2,
-                fontSize: { xs: 12, sm: 15 },
-                background: "#fff",
-                borderRadius: 2,
-                overflow: "hidden",
-                boxShadow: "0 1.5px 8px #0001",
-              }}
-            >
-              <Box component="thead">
-                <Box component="tr" sx={{ bgcolor: "#f6f8fa" }}>
-                  <Box
-                    component="th"
-                    sx={{
-                      border: "1px solid #d0d7de",
-                      p: 1,
-                      fontWeight: 600,
-                      color: "#000",
-                      fontSize: { xs: 13, sm: 15 },
-                    }}
-                  >
-                    ARTISTA
-                  </Box>
-                  <Box
-                    component="th"
-                    sx={{
-                      border: "1px solid #d0d7de",
-                      p: 1,
-                      fontWeight: 600,
-                      color: "#000",
-                      fontSize: { xs: 13, sm: 15 },
-                    }}
-                  >
-                    CANCION
-                  </Box>
-                  <Box
-                    component="th"
-                    sx={{
-                      border: "1px solid #d0d7de",
-                      p: 1,
-                      fontWeight: 600,
-                      color: "#000",
-                      fontSize: { xs: 13, sm: 15 },
-                    }}
-                  >
-                    LANZAMIENTO
-                  </Box>
-                  <Box
-                    component="th"
-                    sx={{
-                      border: "1px solid #d0d7de",
-                      p: 1,
-                      fontWeight: 600,
-                      color: "#000",
-                      fontSize: { xs: 13, sm: 15 },
-                    }}
-                  >
-                    YOUTUBE
-                  </Box>
-                </Box>
-              </Box>
-              <Box component="tbody">
-                <Box component="tr">
-                  <Box
-                    component="td"
-                    sx={{ border: "1px solid #d0d7de", p: 1 }}
-                  >
-                    Mon Laferte
-                  </Box>
-                  <Box
-                    component="td"
-                    sx={{ border: "1px solid #d0d7de", p: 1 }}
-                  >
-                    Tu falta de querer
-                  </Box>
-                  <Box
-                    component="td"
-                    sx={{ border: "1px solid #d0d7de", p: 1 }}
-                  >
-                    2015
-                  </Box>
-                  <Box
-                    component="td"
-                    sx={{ border: "1px solid #d0d7de", p: 1 }}
-                  >
-                    https://youtube.com/ejemplo
-                  </Box>
-                </Box>
-                <Box component="tr">
-                  <Box
-                    component="td"
-                    sx={{ border: "1px solid #d0d7de", p: 1 }}
-                  >
-                    Los Bunkers
-                  </Box>
-                  <Box
-                    component="td"
-                    sx={{ border: "1px solid #d0d7de", p: 1 }}
-                  >
-                    Bailando solo
-                  </Box>
-                  <Box
-                    component="td"
-                    sx={{ border: "1px solid #d0d7de", p: 1 }}
-                  >
-                    2013
-                  </Box>
-                  <Box
-                    component="td"
-                    sx={{ border: "1px solid #d0d7de", p: 1 }}
-                  >
-                    https://youtube.com/ejemplo2
-                  </Box>
-                </Box>
-              </Box>
-            </Box>
-            <Typography
-              variant="body2"
-              color="text.primary"
-              sx={{ fontSize: { xs: 13, sm: 15 }, lineHeight: 1.7 }}
-            >
-              <b>¿Cómo funciona?</b>
-              <br />
-              1. Sube tu archivo Excel con los datos.
-              <br />
-              2. Haz clic en <b>Generar PDF</b>.<br />
-              3. Por cada registro se generan dos tarjetas numeradas: cara A con
-              la información y cara B con el QR correspondiente.
-              <br />
-              4. Al imprimir en doble cara, los QR están invertidos
-              horizontalmente para alinearse con la tarjeta de datos.
-              <br />
-              5. Cada página contiene hasta 16 tarjetas (4x4) y se añaden
-              páginas según el número de registros.
-              <br />
-            </Typography>
-            <Box sx={{ mt: 2, textAlign: "center" }}>
-              <img
-                src={"/hoja.png"}
-                alt="Ejemplo visual de tarjetas"
-                style={{
-                  maxWidth: "100%",
-                  borderRadius: 8,
-                  boxShadow: "0 2px 8px #0002",
-                  height: "auto",
+                  width: { xs: "70%", sm: "52%", md: 320 },
+                  maxWidth: 360,
+                  filter: "drop-shadow(0 18px 48px rgba(10,18,36,0.45))",
                 }}
               />
-            </Box>
-          </Box>
-        </Box>
+              <Typography
+                variant="h3"
+                sx={{
+                  fontWeight: 700,
+                  letterSpacing: "0.04em",
+                  textAlign: "center",
+                  textTransform: "uppercase",
+                  color: alpha("#f8fbff", 0.92),
+                }}
+              >
+                Generador de Tarjetas Premium
+              </Typography>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  textAlign: "center",
+                  maxWidth: 560,
+                  color: alpha("#f8fbff", 0.72),
+                  fontWeight: 500,
+                }}
+              >
+                Convierte tu playlist en tarjetas físicas con QR listos para
+                imprimir en doble cara.
+              </Typography>
+            </Stack>
+
+            <Stack spacing={2} alignItems="center">
+              <input
+                hidden
+                accept=".xls,.xlsx"
+                id="upload-excel"
+                type="file"
+                onChange={handleFile}
+              />
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                spacing={{ xs: 1.5, sm: 2 }}
+                justifyContent="center"
+                sx={{ width: "100%" }}
+              >
+                <label htmlFor="upload-excel" style={{ width: "100%" }}>
+                  <Button
+                    variant="contained"
+                    component="span"
+                    startIcon={<UploadFileIcon />}
+                    fullWidth
+                    size="large"
+                  >
+                    Seleccionar Excel
+                  </Button>
+                </label>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleGenerate}
+                  startIcon={<PictureAsPdfIcon />}
+                  fullWidth
+                  size="large"
+                >
+                  Generar PDF
+                </Button>
+                <Button
+                  variant="contained"
+                  color="success"
+                  href="/plantilla.xlsx"
+                  download
+                  startIcon={<DownloadIcon />}
+                  fullWidth
+                  size="large"
+                >
+                  Descargar Excel
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={handleDownloadSamples}
+                  startIcon={<MusicNoteIcon />}
+                  fullWidth
+                  size="large"
+                >
+                  Descargar fichas
+                </Button>
+              </Stack>
+              {file ? (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: alpha("#f8fbff", 0.78),
+                    fontWeight: 500,
+                  }}
+                >
+                  Archivo seleccionado: {file.name}
+                </Typography>
+              ) : null}
+            </Stack>
+
+            {error ? (
+              <Alert
+                severity="error"
+                sx={{
+                  borderRadius: 3,
+                  bgcolor: alpha(theme.palette.error.dark, 0.15),
+                  border: `1px solid ${alpha(theme.palette.error.light, 0.35)}`,
+                  color: alpha("#fff", 0.95),
+                  fontSize: { xs: 14, sm: 15 },
+                }}
+              >
+                {error}
+              </Alert>
+            ) : null}
+
+            <Stack spacing={3}>
+              <Typography
+                variant="body1"
+                sx={{
+                  fontSize: { xs: 15, md: 17 },
+                  lineHeight: 1.8,
+                  color: alpha("#f8fbff", 0.82),
+                  textAlign: "center",
+                }}
+              >
+                Sube un archivo Excel con las columnas <b>ARTISTA</b>,{" "}
+                <b>CANCION</b>, <b>LANZAMIENTO</b> y <b>YOUTUBE</b>. Cada
+                canción genera dos tarjetas numeradas listas para imprimir en
+                doble cara: información por la cara A y QR alineado por la cara
+                B.
+              </Typography>
+
+              <Paper
+                variant="outlined"
+                sx={{
+                  borderRadius: 4,
+                  bgcolor: alpha("#0b1223", 0.35),
+                  borderColor: alpha("#f8fbff", 0.12),
+                  px: { xs: 2, sm: 3 },
+                  py: { xs: 2.5, sm: 3.5 },
+                  boxShadow: "0 20px 50px rgba(9, 17, 35, 0.45)",
+                  backdropFilter: "blur(16px)",
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: { xs: 1.5, sm: 2 },
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: alpha("#f8fbff", 0.88),
+                  }}
+                >
+                  Ejemplo de archivo Excel
+                </Typography>
+                <Box
+                  component="table"
+                  sx={{
+                    width: "100%",
+                    borderCollapse: "collapse",
+                    fontSize: { xs: 13, sm: 15 },
+                    color: alpha("#f8fbff", 0.9),
+                    background: alpha("#0f172a", 0.35),
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    border: `1px solid ${alpha("#f8fbff", 0.08)}`,
+                  }}
+                >
+                  <Box
+                    component="thead"
+                    sx={{ background: alpha("#1d2f57", 0.58) }}
+                  >
+                    <Box component="tr">
+                      {["ARTISTA", "CANCION", "LANZAMIENTO", "YOUTUBE"].map(
+                        (header) => (
+                          <Box
+                            key={header}
+                            component="th"
+                            sx={{
+                              border: `1px solid ${alpha("#f8fbff", 0.12)}`,
+                              px: 1.5,
+                              py: 1,
+                              fontWeight: 700,
+                              letterSpacing: "0.06em",
+                              textTransform: "uppercase",
+                              textAlign: "left",
+                            }}
+                          >
+                            {header}
+                          </Box>
+                        )
+                      )}
+                    </Box>
+                  </Box>
+                  <Box component="tbody">
+                    {[
+                      {
+                        ARTISTA: "Mon Laferte",
+                        CANCION: "Tu falta de querer",
+                        LANZAMIENTO: "2015",
+                        YOUTUBE: "https://youtube.com/ejemplo",
+                      },
+                      {
+                        ARTISTA: "Los Bunkers",
+                        CANCION: "Bailando solo",
+                        LANZAMIENTO: "2013",
+                        YOUTUBE: "https://youtube.com/ejemplo2",
+                      },
+                    ].map((row) => (
+                      <Box component="tr" key={row.CANCION}>
+                        {Object.values(row).map((value) => (
+                          <Box
+                            key={value}
+                            component="td"
+                            sx={{
+                              border: `1px solid ${alpha("#f8fbff", 0.12)}`,
+                              px: 1.5,
+                              py: 1,
+                              fontWeight: 500,
+                              letterSpacing: "0.01em",
+                            }}
+                          >
+                            {value}
+                          </Box>
+                        ))}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+
+                <Stack
+                  spacing={1.5}
+                  sx={{
+                    mt: { xs: 2.5, sm: 3 },
+                    color: alpha("#f8fbff", 0.78),
+                    fontSize: { xs: 14, sm: 15 },
+                    lineHeight: 1.8,
+                  }}
+                >
+                  <Typography component="span" sx={{ fontWeight: 600 }}>
+                    ¿Cómo funciona?
+                  </Typography>
+                  <Typography component="span">
+                    1. Sube tu archivo Excel con tus canciones.
+                  </Typography>
+                  <Typography component="span">
+                    2. Haz clic en <b>Generar PDF</b> para crear las tarjetas
+                    numeradas.
+                  </Typography>
+                  <Typography component="span">
+                    3. Imprime a doble cara: cara A con datos, cara B con QR
+                    alineado.
+                  </Typography>
+                  <Typography component="span">
+                    4. Cada página acomoda 16 tarjetas (4x4) y el sistema añade
+                    páginas adicionales automáticamente.
+                  </Typography>
+                </Stack>
+
+                <Box sx={{ mt: { xs: 3, sm: 4 }, textAlign: "center" }}>
+                  <Box
+                    component="img"
+                    src="/hoja.png"
+                    alt="Ejemplo visual de tarjetas"
+                    sx={{
+                      width: "100%",
+                      maxWidth: 520,
+                      borderRadius: 4,
+                      boxShadow: "0 25px 80px rgba(9, 17, 35, 0.45)",
+                      border: `1px solid ${alpha("#f8fbff", 0.08)}`,
+                      backdropFilter: "blur(8px)",
+                    }}
+                  />
+                </Box>
+              </Paper>
+            </Stack>
+          </Stack>
+        </Paper>
       </Container>
     </>
   );

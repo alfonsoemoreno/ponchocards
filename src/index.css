@@ -4,207 +4,132 @@
 @import url("https://fonts.googleapis.com/css2?family=Lilita+One&display=swap");
 
 :root {
-  font-family: "Poppins", system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Poppins", "Inter", "Segoe UI", "Helvetica Neue", Arial,
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
+  color: rgba(248, 250, 255, 0.96);
+  background-color: #0f172a;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
 }
+
 body {
-  display: flex;
-  place-items: center;
   min-width: 320px;
+  background: transparent;
 }
 
-/* make body background transparent to show ocean background */
-html,
-body {
-  background-color: transparent !important;
+a {
+  color: inherit;
 }
-/* Fondo ocean y blur */
+
 .ocean-background {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   overflow: hidden;
+  z-index: -4;
   background: linear-gradient(
-    180deg,
-    #6eddd2 0%,
-    #4abfd9 25%,
-    #3680e1 50%,
-    #28518c 100%
+    145deg,
+    rgb(10, 18, 36) 0%,
+    rgba(15, 23, 42, 0.96) 12%,
+    rgba(23, 42, 94, 0.95) 40%,
+    rgba(51, 88, 208, 0.9) 72%,
+    rgba(99, 213, 245, 0.88) 100%
   );
-  z-index: -3;
 }
-.ocean-background::before {
+
+.ocean-background::after {
   content: "";
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 35vh;
-  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'><path fill='%231F3C7A' fill-opacity='1' d='M0,64L48,106.7C96,149,192,235,288,266.7C384,299,480,277,576,229.3C672,181,768,107,864,80C960,53,1056,75,1152,96C1248,117,1344,139,1392,149.3L1440,160L1440,320L0,320Z'/></svg>")
-    bottom/cover no-repeat;
+  inset: -20% -40% 0 -40%;
+  background: radial-gradient(
+      circle at 15% 20%,
+      rgba(79, 139, 255, 0.38) 0%,
+      transparent 42%
+    ),
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(110, 67, 255, 0.28) 0%,
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 45% 82%,
+      rgba(74, 223, 255, 0.26) 0%,
+      transparent 50%
+    );
+  filter: blur(18px);
+  opacity: 0.9;
   pointer-events: none;
-  z-index: -2;
 }
+
 .ocean-blur {
   position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -2;
-  filter: blur(12px) brightness(1.1);
-  backdrop-filter: blur(12px) brightness(1.1);
+  z-index: -3;
+  backdrop-filter: blur(28px) saturate(140%);
+  background: linear-gradient(
+    180deg,
+    rgba(12, 20, 40, 0.25) 0%,
+    rgba(12, 20, 40, 0.65) 65%,
+    rgba(15, 23, 42, 0.92) 100%
+  );
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 24px;
-  border: 2px solid #646cff;
-  padding: 0.8em 1.6em;
-  font-size: 1.25em;
-  font-weight: 700;
-  font-family: inherit;
-  background-color: transparent;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-/* Animación neon flicker */
-/* Animación neon flicker */
-@keyframes neon-flicker {
-  0%,
-  100% {
-    text-shadow: 0 0 8px #fff, 0 0 16px #00e6ff, 0 0 32px #00e6ff,
-      0 0 48px #00e6ff, 0 0 64px #00e6ff, 0 0 80px #00e6ff, 0 0 100px #00e6ff;
-  }
-  10%,
-  90% {
-    text-shadow: 0 0 4px #fff, 0 0 8px #00e6ff, 0 0 16px #00e6ff,
-      0 0 24px #00e6ff, 0 0 32px #00e6ff, 0 0 40px #00e6ff, 0 0 50px #00e6ff;
-  }
-  20%,
-  80% {
-    text-shadow: 0 0 12px #fff, 0 0 24px #00e6ff, 0 0 48px #00e6ff;
-  }
-  30%,
-  50%,
-  70% {
-    text-shadow: 0 0 2px #fff, 0 0 4px #00e6ff, 0 0 8px #00e6ff;
-  }
-}
-
-/* Neon lines animated background (behind container) */
 .neon-lines {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
   z-index: -2;
+  pointer-events: none;
 }
-/* Each neon line strip */
+
 .neon-line {
   position: absolute;
-  left: 0;
-  width: 100vw;
-  height: 6px;
-  border-radius: 3px;
-  opacity: 0.7;
-  filter: blur(1px) brightness(1.5);
+  left: -120vw;
+  width: 240vw;
+  height: 4px;
+  border-radius: 5px;
+  opacity: 0.55;
+  filter: blur(2px);
+  mix-blend-mode: screen;
 }
 
-/* Animación neon flicker */
-@keyframes neon-flicker {
-  0%,
-  100% {
-    text-shadow: 0 0 8px #fff, 0 0 16px #00e6ff, 0 0 32px #00e6ff,
-      0 0 48px #00e6ff, 0 0 64px #00e6ff, 0 0 80px #00e6ff, 0 0 100px #00e6ff;
-  }
-  10%,
-  90% {
-    text-shadow: 0 0 4px #fff, 0 0 8px #00e6ff, 0 0 16px #00e6ff,
-      0 0 24px #00e6ff, 0 0 32px #00e6ff, 0 0 40px #00e6ff, 0 0 50px #00e6ff;
-  }
-  20%,
-  80% {
-    text-shadow: 0 0 12px #fff, 0 0 24px #00e6ff, 0 0 48px #00e6ff;
-  }
-  30%,
-  50%,
-  70% {
-    text-shadow: 0 0 2px #fff, 0 0 4px #00e6ff, 0 0 8px #00e6ff;
-  }
-  40%,
-  60% {
-    text-shadow: 0 0 16px #fff, 0 0 32px #00e6ff, 0 0 64px #00e6ff;
-  }
-}
-
-/* Neon lines animations */
 @keyframes neon-move-right {
   0% {
-    left: -100vw;
+    transform: translateX(-20%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.8;
   }
   100% {
-    left: 100vw;
-  }
-}
-@keyframes neon-move-left {
-  0% {
-    left: 100vw;
-  }
-  100% {
-    left: -100vw;
+    transform: translateX(60%);
+    opacity: 0;
   }
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@keyframes neon-move-left {
+  0% {
+    transform: translateX(60%);
+    opacity: 0;
   }
-  a:hover {
-    color: #747bff;
+  20% {
+    opacity: 0.8;
   }
-  button {
-    background-color: #f9f9f9;
+  100% {
+    transform: translateX(-40%);
+    opacity: 0;
   }
 }

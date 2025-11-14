@@ -8,6 +8,7 @@ import {
   Snackbar,
   Tooltip,
 } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 
 import PDFCardGenerator from "./PDFCardGenerator";
 import AdminDashboard from "./admin/AdminDashboard";
@@ -26,6 +27,7 @@ function App() {
   const [snackbar, setSnackbar] = useState<string | null>(null);
 
   const { user, loading: authLoading } = useSupabaseAuth();
+  const theme = useTheme();
 
   const supabaseConfigured = isSupabaseConfigured();
 
@@ -118,21 +120,25 @@ function App() {
         >
           <span>
             <Button
-              variant={view === "admin" ? "contained" : "outlined"}
+              variant="contained"
+              color="primary"
               onClick={handleOpenAdmin}
               disabled={authLoading}
               sx={{
+                minWidth: { xs: 148, sm: 184 },
                 fontWeight: 700,
-                backdropFilter: "blur(12px)",
-                backgroundColor:
+                backgroundImage:
                   view === "admin"
-                    ? "rgba(31,60,122,0.9)"
-                    : "rgba(12,30,66,0.65)",
-                color: "#fff",
-                borderColor: "rgba(255,255,255,0.35)",
+                    ? theme.customGradients.lagoon
+                    : theme.customGradients.plasma,
+                borderColor: alpha("#ffffff", 0.25),
+                boxShadow:
+                  "0 25px 50px -24px rgba(36,73,187,0.65), inset 0 1px 0 rgba(255,255,255,0.25)",
+                backdropFilter: "blur(14px)",
                 "&:hover": {
-                  backgroundColor: "rgba(31,60,122,0.85)",
-                  borderColor: "rgba(255,255,255,0.6)",
+                  backgroundImage: theme.customGradients.sunset,
+                  boxShadow:
+                    "0 30px 60px -24px rgba(36,73,187,0.75), inset 0 1px 0 rgba(255,255,255,0.35)",
                 },
               }}
             >
