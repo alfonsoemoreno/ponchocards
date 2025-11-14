@@ -77,6 +77,7 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
 type SortOption =
   | "id_asc"
+  | "id_desc"
   | "artist_asc"
   | "artist_desc"
   | "title_asc"
@@ -88,6 +89,7 @@ const DEFAULT_SORT_OPTION: SortOption = "id_asc";
 
 const SORT_OPTIONS: Array<{ value: SortOption; label: string }> = [
   { value: "id_asc", label: "ID ascendente" },
+  { value: "id_desc", label: "ID descendente" },
   { value: "artist_asc", label: "Artista A → Z" },
   { value: "artist_desc", label: "Artista Z → A" },
   { value: "title_asc", label: "Canción A → Z" },
@@ -141,6 +143,7 @@ export default function AdminDashboard({
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+  const showActionLabels = !isSmallScreen;
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const iconActionBaseStyles = {
     minWidth: { xs: "auto", sm: 48 },
@@ -244,6 +247,8 @@ export default function AdminDashboard({
     direction: "asc" | "desc";
   }>(() => {
     switch (sortOption) {
+      case "id_desc":
+        return { sortBy: "id", direction: "desc" };
       case "artist_asc":
         return { sortBy: "artist", direction: "asc" };
       case "artist_desc":
@@ -1303,30 +1308,58 @@ export default function AdminDashboard({
                                 onClick={handleRefresh}
                                 disabled={!supabaseConfigured || loading}
                                 aria-label="Recargar lista"
-                                sx={{
-                                  ...iconActionBaseStyles,
-                                  px: { xs: 2.3, sm: 0 },
-                                  borderColor: "rgba(31,60,122,0.45)",
-                                  color: "rgba(31,60,122,0.9)",
-                                  backgroundColor: "rgba(245,248,255,0.9)",
-                                  "&:hover": {
-                                    borderColor: "rgba(31,60,122,0.8)",
-                                    backgroundColor: "rgba(236,242,255,0.95)",
-                                    boxShadow:
-                                      "0 16px 32px -18px rgba(31,60,122,0.35)",
+                                sx={[
+                                  iconActionBaseStyles,
+                                  showActionLabels
+                                    ? {
+                                        "& .button-label": {
+                                          display: "inline",
+                                        },
+                                      }
+                                    : {
+                                        minWidth: 44,
+                                        px: 0,
+                                        gap: 0,
+                                        "& .MuiButton-startIcon": {
+                                          mr: 0,
+                                        },
+                                      },
+                                  {
+                                    px: showActionLabels
+                                      ? { xs: 2.3, sm: 0 }
+                                      : 0,
+                                    gap: showActionLabels
+                                      ? { xs: 1, sm: 0 }
+                                      : 0,
+                                    "& .MuiButton-startIcon": {
+                                      mr: showActionLabels
+                                        ? { xs: 1, sm: 0 }
+                                        : 0,
+                                    },
+                                    borderColor: "rgba(31,60,122,0.45)",
+                                    color: "rgba(31,60,122,0.9)",
+                                    backgroundColor: "rgba(245,248,255,0.9)",
+                                    "&:hover": {
+                                      borderColor: "rgba(31,60,122,0.8)",
+                                      backgroundColor: "rgba(236,242,255,0.95)",
+                                      boxShadow:
+                                        "0 16px 32px -18px rgba(31,60,122,0.35)",
+                                    },
+                                    "&.Mui-disabled": {
+                                      opacity: 0.5,
+                                      boxShadow: "none",
+                                    },
                                   },
-                                  "&.Mui-disabled": {
-                                    opacity: 0.5,
-                                    boxShadow: "none",
-                                  },
-                                }}
+                                ]}
                               >
-                                <Typography
-                                  component="span"
-                                  className="button-label"
-                                >
-                                  Recargar
-                                </Typography>
+                                {showActionLabels ? (
+                                  <Typography
+                                    component="span"
+                                    className="button-label"
+                                  >
+                                    Recargar
+                                  </Typography>
+                                ) : null}
                               </Button>
                             </Box>
                           </Tooltip>
@@ -1350,30 +1383,58 @@ export default function AdminDashboard({
                                 onClick={handleImportButtonClick}
                                 disabled={!supabaseConfigured || importing}
                                 aria-label="Importar catálogo"
-                                sx={{
-                                  ...iconActionBaseStyles,
-                                  px: { xs: 2.6, sm: 0 },
-                                  borderColor: "rgba(31,60,122,0.45)",
-                                  color: "rgba(31,60,122,0.9)",
-                                  backgroundColor: "rgba(245,248,255,0.92)",
-                                  "&:hover": {
-                                    borderColor: "rgba(31,60,122,0.85)",
-                                    backgroundColor: "rgba(236,243,255,0.96)",
-                                    boxShadow:
-                                      "0 18px 36px -18px rgba(31,60,122,0.35)",
+                                sx={[
+                                  iconActionBaseStyles,
+                                  showActionLabels
+                                    ? {
+                                        "& .button-label": {
+                                          display: "inline",
+                                        },
+                                      }
+                                    : {
+                                        minWidth: 44,
+                                        px: 0,
+                                        gap: 0,
+                                        "& .MuiButton-startIcon": {
+                                          mr: 0,
+                                        },
+                                      },
+                                  {
+                                    px: showActionLabels
+                                      ? { xs: 2.6, sm: 0 }
+                                      : 0,
+                                    gap: showActionLabels
+                                      ? { xs: 1, sm: 0 }
+                                      : 0,
+                                    "& .MuiButton-startIcon": {
+                                      mr: showActionLabels
+                                        ? { xs: 1, sm: 0 }
+                                        : 0,
+                                    },
+                                    borderColor: "rgba(31,60,122,0.45)",
+                                    color: "rgba(31,60,122,0.9)",
+                                    backgroundColor: "rgba(245,248,255,0.92)",
+                                    "&:hover": {
+                                      borderColor: "rgba(31,60,122,0.85)",
+                                      backgroundColor: "rgba(236,243,255,0.96)",
+                                      boxShadow:
+                                        "0 18px 36px -18px rgba(31,60,122,0.35)",
+                                    },
+                                    "&.Mui-disabled": {
+                                      opacity: 0.55,
+                                      boxShadow: "none",
+                                    },
                                   },
-                                  "&.Mui-disabled": {
-                                    opacity: 0.55,
-                                    boxShadow: "none",
-                                  },
-                                }}
+                                ]}
                               >
-                                <Typography
-                                  component="span"
-                                  className="button-label"
-                                >
-                                  Importar
-                                </Typography>
+                                {showActionLabels ? (
+                                  <Typography
+                                    component="span"
+                                    className="button-label"
+                                  >
+                                    Importar
+                                  </Typography>
+                                ) : null}
                               </Button>
                             </Box>
                           </Tooltip>
@@ -1397,30 +1458,58 @@ export default function AdminDashboard({
                                 onClick={handleDownloadExcel}
                                 disabled={!supabaseConfigured || exporting}
                                 aria-label="Descargar catálogo"
-                                sx={{
-                                  ...iconActionBaseStyles,
-                                  px: { xs: 2.6, sm: 0 },
-                                  borderColor: "rgba(31,60,122,0.45)",
-                                  color: "rgba(31,60,122,0.9)",
-                                  backgroundColor: "rgba(245,248,255,0.92)",
-                                  "&:hover": {
-                                    borderColor: "rgba(31,60,122,0.85)",
-                                    backgroundColor: "rgba(236,243,255,0.96)",
-                                    boxShadow:
-                                      "0 18px 36px -18px rgba(31,60,122,0.35)",
+                                sx={[
+                                  iconActionBaseStyles,
+                                  showActionLabels
+                                    ? {
+                                        "& .button-label": {
+                                          display: "inline",
+                                        },
+                                      }
+                                    : {
+                                        minWidth: 44,
+                                        px: 0,
+                                        gap: 0,
+                                        "& .MuiButton-startIcon": {
+                                          mr: 0,
+                                        },
+                                      },
+                                  {
+                                    px: showActionLabels
+                                      ? { xs: 2.6, sm: 0 }
+                                      : 0,
+                                    gap: showActionLabels
+                                      ? { xs: 1, sm: 0 }
+                                      : 0,
+                                    "& .MuiButton-startIcon": {
+                                      mr: showActionLabels
+                                        ? { xs: 1, sm: 0 }
+                                        : 0,
+                                    },
+                                    borderColor: "rgba(31,60,122,0.45)",
+                                    color: "rgba(31,60,122,0.9)",
+                                    backgroundColor: "rgba(245,248,255,0.92)",
+                                    "&:hover": {
+                                      borderColor: "rgba(31,60,122,0.85)",
+                                      backgroundColor: "rgba(236,243,255,0.96)",
+                                      boxShadow:
+                                        "0 18px 36px -18px rgba(31,60,122,0.35)",
+                                    },
+                                    "&.Mui-disabled": {
+                                      opacity: 0.55,
+                                      boxShadow: "none",
+                                    },
                                   },
-                                  "&.Mui-disabled": {
-                                    opacity: 0.55,
-                                    boxShadow: "none",
-                                  },
-                                }}
+                                ]}
                               >
-                                <Typography
-                                  component="span"
-                                  className="button-label"
-                                >
-                                  Exportar
-                                </Typography>
+                                {showActionLabels ? (
+                                  <Typography
+                                    component="span"
+                                    className="button-label"
+                                  >
+                                    Exportar
+                                  </Typography>
+                                ) : null}
                               </Button>
                             </Box>
                           </Tooltip>
