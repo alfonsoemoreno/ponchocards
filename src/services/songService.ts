@@ -195,6 +195,7 @@ export async function deleteSong(id: number): Promise<void> {
 
 export async function fetchSongStatistics(): Promise<SongStatistics> {
   const supabase = getSupabaseClient();
+  const STAT_LIMIT = 10;
 
   const { data, error } = await supabase
     .from("songs")
@@ -247,7 +248,7 @@ export async function fetchSongStatistics(): Promise<SongStatistics> {
       }
       return b.count - a.count;
     })
-    .slice(0, 5)
+    .slice(0, STAT_LIMIT)
     .map(({ label, count }) => ({ label, count }));
 
   const yearsLeastCommon = [...yearEntries]
@@ -257,7 +258,7 @@ export async function fetchSongStatistics(): Promise<SongStatistics> {
       }
       return a.count - b.count;
     })
-    .slice(0, Math.min(5, yearEntries.length))
+    .slice(0, Math.min(STAT_LIMIT, yearEntries.length))
     .map(({ label, count }) => ({ label, count }));
 
   const decadeEntries = Array.from(decadeMap.entries()).map(
@@ -275,7 +276,7 @@ export async function fetchSongStatistics(): Promise<SongStatistics> {
       }
       return a.count - b.count;
     })
-    .slice(0, Math.min(5, decadeEntries.length))
+    .slice(0, Math.min(STAT_LIMIT, decadeEntries.length))
     .map(({ label, count }) => ({ label, count }));
 
   const artistsMostCommon = Array.from(artistMap.entries())
@@ -286,7 +287,7 @@ export async function fetchSongStatistics(): Promise<SongStatistics> {
       }
       return b.count - a.count;
     })
-    .slice(0, 10);
+    .slice(0, STAT_LIMIT);
 
   return {
     totalSongs,
